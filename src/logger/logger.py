@@ -53,6 +53,7 @@ class LogOutput:
 
 
 class Logger:
+	active: bool = True
 	showName: bool = True
 	name: str = "LOG"
 	levels: [LogLevel] = [
@@ -72,7 +73,7 @@ class Logger:
 
 
 	def log(self, level:LogLevel = None, msg:str = None) -> None:
-		if level is None:
+		if level is None or not self.active:
 			return
 		for out in self.outputs:
 			if level.value < out.minLevel:

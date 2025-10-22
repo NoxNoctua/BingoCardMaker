@@ -13,9 +13,7 @@ logger = Logger()
 # TODO make main that runs the comandline command
 # TODO add arguments so that quiet, batchsize, path, log etc can be spcified
 # TODO add pause after running
-# TODO finish other todos
 # TODO build to exe
-# TODO upload to github
 # TODO add to portfolio
 
 class BingoCard:
@@ -59,7 +57,9 @@ class BingoCard:
 	drawWatermark: bool = True
 	watermarkFilePath: str = "watermark.png"
 
-	def __init__(self, configFilePath="config.json"):
+	def __init__(self, configFilePath="config.json", quiet=False):
+		if quiet:
+			logger.active = False
 		log = logger.addTag("init BingoCard")
 		# MARK: Load Config
 		try:
@@ -220,7 +220,7 @@ class BingoCard:
 
 		# draw the tiles other than the free space
 		for i, t in enumerate(cardTiles):
-			if i >= self.freespaceIndex:
+			if self.hasFreespace and i >= self.freespaceIndex:
 				i += 1
 			try:
 				with Image.open(t.path).convert("RGBA") as im:
@@ -239,26 +239,29 @@ class BingoCard:
 		
 		# draw the free space
 		log.dbg("Draw freespace")
-		try:
-			with Image.open(self.freespaceImagePath).convert("RGBA") as im:
-				resized = ImageOps.fit(im, self.tileSize)
-				xpos = (((self.freespaceIndex % self.boardShape.cols) * (self.tileSize.width
-					+ self.tilepading))
-					+ self.tilepading + self.tileStartCor.x)
-				ypos = ((int(self.freespaceIndex/self.boardShape.cols) * (self.tileSize.hight
-					+ self.tilepading))
-					+ self.tilepading + self.tileStartCor.y)
-				
-				cardimg.paste(resized,(xpos, ypos), resized)
-		except Exception as e:
-			log.err("Failed to open freespace png")
-			log.err(str(e))
+		if self.hasFreespace:
+			try:
+				with Image.open(self.freespaceImagePath).convert("RGBA") as im:
+					resized = ImageOps.fit(im, self.tileSize)
+					xpos = (((self.freespaceIndex % self.boardShape.cols) * (self.tileSize.width
+						+ self.tilepading))
+						+ self.tilepading + self.tileStartCor.x)
+					ypos = ((int(self.freespaceIndex/self.boardShape.cols) * (self.tileSize.hight
+						+ self.tilepading))
+						+ self.tilepading + self.tileStartCor.y)
+					
+					cardimg.paste(resized,(xpos, ypos), resized)
+			except Exception as e:
+				log.err("Failed to open freespace png")
+				log.err(str(e))
 		
 		# add extra infomation text
 		log.dbg(f"Drawing extra info text: {self.drawExtraInfo}")
 		if self.drawExtraInfo:
 			if id is not None:
 				infoText = self.extraInfo + f" | Card ID: {id}"
+			else:
+				infoText = self.extraInfo
 			fontSize = 10
 			draw.text(
 				(20+self.cardPadding.left,cardimg.height-(fontSize*2)),
