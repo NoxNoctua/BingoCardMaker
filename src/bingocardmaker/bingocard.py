@@ -22,6 +22,7 @@ class BingoCard:
 	# MARK: Named Tuples
 	BoardShape = namedtuple('BoardShape', 'cols rows')
 	CardSize = namedtuple('CardSize', 'width hight')
+	CardPadding = namedtuple('CardPadding', 'top right bottom left')
 	TileSize = namedtuple('TileSize', 'width hight')
 	Cord = namedtuple('Cord', 'x y')
 
@@ -39,6 +40,7 @@ class BingoCard:
 	hasFreespace: bool = True
 	freespaceIndex: int = 12
 	cardSize: CardSize = CardSize(1000,1000)
+	cardPadding: CardPadding = CardPadding(0,0,100,0)
 	tileSize: TileSize = TileSize(50,50)
 	tileStartCor: Cord = Cord(50,50)
 	tilepading: int = 5
@@ -83,6 +85,12 @@ class BingoCard:
 				self.config["cardSize"][0],
 				self.config["cardSize"][1]
 			)
+			self.cardPadding = self.CardPadding(
+				self.config["cardPadding"][0],
+				self.config["cardPadding"][1],
+				self.config["cardPadding"][2],
+				self.config["cardPadding"][3]
+			)
 			self.tileSize = self.TileSize(
 				self.config["tileSize"][0],
 				self.config["tileSize"][1],
@@ -96,14 +104,21 @@ class BingoCard:
 			self.numOfCardsInBatch = self.config["numOfCardsInBatch"]
 			self.imageFileType = self.config["imageFileType"]
 			self.bgColor = tuple(self.config["bgColor"])
-			self.drawBoarder - self.config["drawBoarder"]
+			self.drawBoarder = self.config["drawBoarder"]
 			self.boarderColor = tuple(self.config["boarderColor"])
 			self.boarderWidth = self.config["boarderWidth"]
-			self.drawQRCode = self.config["drawQRCode"]
+			self.drawQRCode = self.config["drawQR"]
 			self.qrLink = self.config["qrLink"]
 			self.qrLocation = self.config["qrLocation"]
 			self.drawWatermark = self.config["drawWatermark"]
 			self.watermarkFilePath = self.config["watermarkFilePath"]
+
+			# add card padding to start cords for tiles
+			self.tileStartCor = self.Cord(
+				self.tileStartCor.x + self.cardPadding.right,
+				self.tileStartCor.y + self.cardPadding.top
+			)
+
 		except Exception as e:
 			log.err("Loading the config failed")
 			log.err(str(e))
@@ -142,6 +157,7 @@ class BingoCard:
 
 	# returns a PIL image of a randomized card
 	def createCard(self, pool, id:int=None) -> Image:
+		# MARK: Create Card
 		log = logger.addTag("createCard")
 		log.inf("Creating Card")
 
@@ -159,15 +175,23 @@ class BingoCard:
 		log.inf("Pulled {} tiles from the pool".format(len(cardTiles)))
 
 		# create the card image
-		cardimg = Image.new("RGBA", self.cardSize, self.bgColor)
+		outimgSize = (
+			self.cardSize.width + self.cardPadding.right + self.cardPadding.left,
+			self.cardSize.hight + self.cardPadding.top + self.cardPadding.bottom
+		)
+		cardimg = Image.new("RGBA", outimgSize, self.bgColor)
 		draw = ImageDraw.Draw(cardimg)
 
 		# paste in base image
 		if self.useBaseImage:
 			try:
 				with Image.open(self.baseImagePath).convert("RGBA") as im:
-					resized = ImageOps.fit(im, self.CardSize)
-					cardimg.paste(resized, (0,0), resized)
+					resized = ImageOps.fit(im, self.cardSize)
+					cardimg.paste(
+						resized,
+						(self.cardPadding.left,self.cardPadding.top),
+						resized
+					)
 			except Exception as e:
 				log.err("Loading base image failed")
 				log.err(str(e))
@@ -237,7 +261,7 @@ class BingoCard:
 				infoText = self.extraInfo + f" | Card ID: {id}"
 			fontSize = 10
 			draw.text(
-				(20,self.cardSize.hight-(fontSize*2)),
+				(20+self.cardPadding.left,cardimg.height-(fontSize*2)),
 				infoText,
 				fill=(0,0,0),
 				font_size=fontSize
@@ -250,31 +274,31 @@ class BingoCard:
 			qr = qrcode.QRCode(
 				version=1,
 				error_correction=qrcode.constants.ERROR_CORRECT_L,
-				box_size=10,
-				border=1
+				box_size=3,
+				border=4
 			)
 			qr.add_data(self.qrLink)
 			qr.make(fit=True)
 
-			qrimg = qr.make_image(fill_color=(0,0,0), back_color=(255,255,255)).convert("RGBA")
+			qrimg = qr.make_image(fill_color=(0,0,0), back_color=self.bgColor).convert("RGBA")
 
 			qrpos = (0,0)
 			if self.qrLocation == "TOP_LEFT":
-				qrpos = (0,0)
+				qrpos = (self.cardPadding.left,0)
 			elif self.qrLocation == "TOP_RIGHT":
 				qrpos = (
-					self.cardSize.width-qrimg.width,
+					cardimg.width-qrimg.width-self.cardPadding.right,
 					0
 				)
 			elif self.qrLocation == "BOTTOM_LEFT":
 				qrpos = (
-					0,
-					self.cardSize.hight-qrimg.height
+					self.cardPadding.left,
+					cardimg.height-qrimg.height
 				)
 			else:
 				qrpos = (
-					self.cardSize.width-qrimg.width,
-					self.cardSize.hight-qrimg.height
+					cardimg.width-qrimg.width-self.cardPadding.right,
+					cardimg.height-qrimg.height
 				)
 
 			cardimg.paste(

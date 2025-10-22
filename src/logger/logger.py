@@ -65,7 +65,7 @@ class Logger:
 	tags: [str] = []
 	useColors: bool = True
 	outputs: [LogOutput] = [
-		LogOutput(True, True, False, None, 0),
+		LogOutput(True, True, False, None, 1),
 		LogOutput(False, False, True, "log.txt", 0)
 	]
 	widestLevel: int = 10
@@ -76,7 +76,7 @@ class Logger:
 			return
 		for out in self.outputs:
 			if level.value < out.minLevel:
-				return
+				continue
 			useColors = self.useColors and out.useColors
 			line = ""
 			if useColors:
