@@ -164,6 +164,12 @@ class BingoCard:
 		# Randomize the list of pool cards and pick row x col amount of them
 		random.shuffle(pool)
 		cardTiles = []
+
+		# make sure the pool has enough tiles to fill the card
+		if self.numTiles > len(pool):
+			log.err("There is not enough valid tiles in the pool dir")
+			raise Exception("There is not enough valid image files in the pool dir")
+
 		for i in range(self.numTiles):
 			cardTiles.append(pool[i])
 
@@ -360,6 +366,9 @@ def main():
 
 
 	bingoCard.genBatchOfCards()
+
+	print("Press Enter to close: ")
+	input()
 
 
 	
