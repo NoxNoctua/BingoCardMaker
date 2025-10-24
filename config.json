@@ -14,7 +14,7 @@
 	"tileSize": [157,160],
 	"tileStartCor": [-15,130],
 	"tilepading": 40,
-	"numOfCardsInBatch": 5,
+	"numOfCardsInBatch": 1,
 	"imageFileType": "PNG",
 	"bgColor": [100,155,255,255],
 	"drawBoarder": true,
