@@ -6,10 +6,6 @@ from collections import namedtuple
 from PIL import Image, ImageOps, ImageDraw
 import qrcode
 
-from borb.pdf import Document, CheckBox, Page, PageLayout, PDF, SingleColumnLayout, GenderDropDownList, RGBColor
-from borb.pdf import Image as BorbImage
-
-
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.colors import Color
@@ -224,10 +220,10 @@ class BingoCard:
 					self.tileStartCor.y
 				)
 				draw.rectangle(
-					(xpos+(self.tilepading/2)-(self.boarderWidth/2),
-					ypos+(self.tilepading/2)-(self.boarderWidth/2),
-					xpos+self.tileSize.width+(1.5*self.tilepading)+(self.boarderWidth/2),
-					ypos+self.tileSize.hight+(1.5*self.tilepading)+(self.boarderWidth/2)),
+					(xpos-(self.boarderWidth/2),
+					ypos-(self.boarderWidth/2),
+					xpos+self.tileSize.width+(self.tilepading)+(self.boarderWidth/2),
+					ypos+self.tileSize.hight+(self.tilepading)+(self.boarderWidth/2)),
 					outline=self.boarderColor,
 					width=self.boarderWidth
 				)
@@ -239,12 +235,14 @@ class BingoCard:
 			try:
 				with Image.open(t.path).convert("RGBA") as im:
 					resized = ImageOps.fit(im, self.tileSize)
-					xpos = (((i % self.boardShape.cols) * (self.tileSize.width
+					xpos = (
+						((i % self.boardShape.cols) * (self.tileSize.width
 						+ self.tilepading))
-						+ self.tilepading + self.tileStartCor.x)
+						+ int(self.tilepading/2) + self.tileStartCor.x
+					)
 					ypos = ((int(i/self.boardShape.cols) * (self.tileSize.hight
 						+ self.tilepading))
-						+ self.tilepading + self.tileStartCor.y)
+						+ int(self.tilepading/2) + self.tileStartCor.y)
 					
 					cardimg.paste(resized,(xpos, ypos), resized)
 			except Exception as e:
@@ -259,10 +257,10 @@ class BingoCard:
 					resized = ImageOps.fit(im, self.tileSize)
 					xpos = (((self.freespaceIndex % self.boardShape.cols) * (self.tileSize.width
 						+ self.tilepading))
-						+ self.tilepading + self.tileStartCor.x)
+						+ int(self.tilepading/2) + self.tileStartCor.x)
 					ypos = ((int(self.freespaceIndex/self.boardShape.cols) * (self.tileSize.hight
 						+ self.tilepading))
-						+ self.tilepading + self.tileStartCor.y)
+						+ int(self.tilepading/2) + self.tileStartCor.y)
 					
 					cardimg.paste(resized,(xpos, ypos), resized)
 			except Exception as e:
@@ -361,8 +359,8 @@ class BingoCard:
 			pool = self.loadpool()
 		for i in range(self.numOfCardsInBatch):
 			cardimg = self.createCard(pool, i)
-			if asPDF:
-				self.addCheckBoxes(cardimg, "card{}".format(i))
+			if asPDF or self.imageFileType=="PDF":
+				self.saveToPDF(cardimg, "card{}".format(i))
 			else:
 				self.saveCard(cardimg, "card{}".format(i))
 		
@@ -370,76 +368,44 @@ class BingoCard:
 
 	# MARK: Converting to interactive pdf
 	# Convert image to pdf with checkboxes
-	def addCheckBoxes(self, im: Image, name: str):
-		d: Document = Document()
-		p: Page = Page(height_in_points=im.height, width_in_points=im.width)
-		d.append_page(p)
-
-		l: PageLayout = SingleColumnLayout(p)
-
-		bim = BorbImage(
-			bytes_path_pil_image_or_url=im
-		)
-		bim.paint(
-			available_space=(0,0,im.width,im.height),
-			page=p
-		)
-
-		for i in range(self.numTiles):
-			xpos = (
-				((i % self.boardShape.cols) *
-				(self.tileSize.width + self.tilepading)) +
-				self.tileStartCor.x
-			)
-			ypos = (
-				(int(i / self.boardShape.cols) *
-				(self.tileSize.hight + self.tilepading)) +
-				self.tileStartCor.y
-			)
+	def saveToPDF(self, im: Image, name: str, addCheckboxes: bool=True):
 		
-		l.append_layout_element(
-			CheckBox(
-				field_name="tilebox1",
-				value=True,
-				background_color=RGBColor(1,0,0)
-			)
+		outfile = os.path.join(
+			self.outputPath, 
+			(name + ".pdf")
 		)
-		PDF.write(what=d, where_to="outputborb.pdf")
-		
-
-		# PDF.write(what=d, where_to="output.pdf")
 		c = canvas.Canvas(
-			"output.pdf",
+			outfile,
 			pagesize=(im.width, im.height)
 		)
 		c.drawImage(ImageReader(im),0,0)
 
 		c.setFillAlpha(0)
 		c.setStrokeAlpha(0)
-
-		for i in range(self.numTiles):
-			xpos = (
-				((i % self.boardShape.cols) *
-				(self.tileSize.width + self.tilepading)) +
-				self.tileStartCor.x
-			)
-			ypos = (
-				(int(i / self.boardShape.cols) *
-				(self.tileSize.hight + self.tilepading)) +
-				self.tileStartCor.y
-			)
-			#flip cord for x axis
-			ypos = im.height - ypos
-			c.acroForm.checkbox(
-				checked=False,
-				x=xpos,
-				y=ypos,
-				size=self.tileSize.width,
-				#fillColor=Color(0,0,0,0),
-				name=f"TileBox{i}",
-				#borderWidth=0,
-				#borderColor=Color(0,0,0,0)
-			)
+		if addCheckboxes:
+			for i in range(self.numTiles):
+				xpos = (
+					((i % self.boardShape.cols) *
+					(self.tileSize.width + self.tilepading)) +
+					self.tileStartCor.x
+				)
+				ypos = (
+					(int(i / self.boardShape.cols) *
+					(self.tileSize.hight + self.tilepading)) +
+					self.tileStartCor.y
+				)
+				#flip cord for x axis
+				ypos = (im.height - ypos) - self.tileSize.hight - self.tilepading
+				c.acroForm.checkbox(
+					checked=False,
+					x=xpos,
+					y=ypos,
+					size=self.tileSize.width+self.tilepading,
+					fillColor=Color(0,0,0,0),
+					name=f"TileBox{i}",
+					borderWidth=0,
+					borderColor=Color(0,0,0,0)
+				)
 		c.showPage()
 		c.save()
 
@@ -451,7 +417,7 @@ def main():
 	bingoCard = BingoCard()
 
 
-	bingoCard.genBatchOfCards(asPDF=True)
+	bingoCard.genBatchOfCards()
 
 	print("Press Enter to close: ")
 	input()
