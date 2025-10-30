@@ -1,6 +1,6 @@
 pool/
 log.txt
-/output
+output/
 /builds
 /build
 /dist

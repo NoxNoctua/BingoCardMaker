@@ -58,7 +58,7 @@ class Logger:
 	name: str = "LOG"
 	levels: [LogLevel] = [
 		LogLevel("DEBUG", 0, "dbg", "", False, ""),
-		LogLevel("INFO", 1, "inf", Fore.YELLOW, False, ""),
+		LogLevel("INFO", 1, "inf", Fore.GREEN, False, ""),
 		LogLevel("WARNNING", 2, "wrn", "", True, Back.YELLOW),
 		LogLevel("ERROR", 3, "err", "", True, Back.RED),
 		]

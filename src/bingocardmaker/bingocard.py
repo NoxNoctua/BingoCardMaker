@@ -21,6 +21,7 @@ logger = Logger()
 # TODO add to portfolio
 
 class BingoCard:
+	logger: Logger = None
 	# MARK: Named Tuples
 	BoardShape = namedtuple('BoardShape', 'cols rows')
 	CardSize = namedtuple('CardSize', 'width hight')
@@ -29,7 +30,7 @@ class BingoCard:
 	Cord = namedtuple('Cord', 'x y')
 
 	# MARK: Defualt Config
-	configFilePath: str = "config.json"
+	configFilePath: str = os.path.join("resources", "config.json")
 	name: str = "Bingo Card Maker"
 	description: str = "Config Load failed"
 	poolDirectoryPath: str = "pool"
@@ -48,7 +49,7 @@ class BingoCard:
 	tilepading: int = 5
 	useBaseImage: bool = True
 	numOfCardsInBatch: int = 5
-	imageFileType: str = "PNG"
+	imageFileType: [str] = ["PNG", "PDF"]
 	bgColor: tuple = (255,255,255,255)
 	drawBoarder: bool = True
 	boarderColor: tuple = (0,0,0,255)
@@ -61,7 +62,13 @@ class BingoCard:
 	drawWatermark: bool = True
 	watermarkFilePath: str = "watermark.png"
 
-	def __init__(self, configFilePath="config.json", quiet=False):
+	def __init__(
+		self,
+		configFilePath=os.path.join("resources", "config.json"),
+		quiet=False
+	):
+		if self.logger is None:
+			self.logger = Logger() 
 		if quiet:
 			logger.active = False
 		log = logger.addTag("init BingoCard")
@@ -111,6 +118,8 @@ class BingoCard:
 			self.drawBoarder = self.config["drawBoarder"]
 			self.boarderColor = tuple(self.config["boarderColor"])
 			self.boarderWidth = self.config["boarderWidth"]
+			self.drawExtraInfo = self.config["drawExtraInfo"]
+			self.extraInfo = self.config["extraInfo"]
 			self.drawQRCode = self.config["drawQR"]
 			self.qrLink = self.config["qrLink"]
 			self.qrLocation = self.config["qrLocation"]
@@ -153,7 +162,7 @@ class BingoCard:
 		except Exception as e:
 			log.err("Could not scan pool dir")
 			log.err(str(e))
-			throw(Exception())
+			raise Exception()
 		
 		log.inf("Found {} tiles in pool".format(len(pool)))
 
@@ -335,20 +344,43 @@ class BingoCard:
 		return cardimg
 
 	# Saves img to output dir
-	def saveCard(self, cardimg, name) -> None:
+	def saveCard(self, cardimg: Image, name: str, imageType: str) -> str:
 		log = logger.addTag("saveCard")
 		try:
 			outfile = os.path.join(
 				self.outputPath, 
-				(name + "." + self.imageFileType.lower())
+				(name + "." + imageType.lower())
 				)
 			log.inf("Saving card {}".format(outfile))
 			if self.imageFileType == "JPEG":
 				cardimg = cardimg.convert("RGB")
-			cardimg.save(outfile, self.imageFileType)
+			cardimg.save(outfile, imageType)
+			return outfile
 		except Exception as e:
 			log.err("Failed to save card")
 			log.err(str(e))
+			return None
+
+	# Generates a single cards with id given id returns file name
+	def genCard(self, id: int=None, pool: []=None, fileType: str="PNG") -> str:
+		log = logger
+		log.tags.append("genCard")
+		log.inf(f"Generating Card {id}")
+
+		if pool is None:
+			pool = self.loadpool()
+		cardimg = self.createCard(pool, id)
+
+		path = "nopath"
+		if fileType=="PDF":
+			path = self.saveToPDF(cardimg, "card{}".format(id))
+		else:
+			path = self.saveCard(cardimg, "card{}".format(id), fileType)
+		
+		log.inf("Generation Complete")
+
+		log.tags.pop()
+		return path
 
 	# generates and saves multiple cards with numbered names
 	def genBatchOfCards(self, pool = None, asPDF=False):
@@ -358,17 +390,14 @@ class BingoCard:
 		if pool is None:
 			pool = self.loadpool()
 		for i in range(self.numOfCardsInBatch):
-			cardimg = self.createCard(pool, i)
-			if asPDF or self.imageFileType=="PDF":
-				self.saveToPDF(cardimg, "card{}".format(i))
-			else:
-				self.saveCard(cardimg, "card{}".format(i))
-		
+			for t in self.imageFileType:
+				self.genCard(id=i,pool=pool,fileType=t)
 		log.inf("Generation Complete")
 
 	# MARK: Converting to interactive pdf
 	# Convert image to pdf with checkboxes
-	def saveToPDF(self, im: Image, name: str, addCheckboxes: bool=True):
+	# TODO add try catch checks and logging
+	def saveToPDF(self, im: Image, name: str, addCheckboxes: bool=True) -> str:
 		
 		outfile = os.path.join(
 			self.outputPath, 
@@ -408,6 +437,8 @@ class BingoCard:
 				)
 		c.showPage()
 		c.save()
+
+		return outfile
 
 
 
