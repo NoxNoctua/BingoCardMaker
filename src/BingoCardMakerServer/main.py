@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import FastAPI, Response, HTTPException, status, Depends
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 
@@ -96,6 +97,17 @@ class MakerServer:
 
 app = FastAPI()
 
+origins = [
+	"*",
+]
+
+app.add_middleware(
+	CORSMiddleware,
+	allow_origins=origins,
+	allow_credentials=True,
+	allow_methods=["*"],
+	allow_headers=["*"],
+)
 makerServer = MakerServer()
 
 # MARK: temp sec calls

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Bingo Card Maker</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<script>
+		window.onload = function() {
+			console.log("Script Start")
+			const loginForm = document.querySelector("#loginform");
+
+			var token = ""
+
+			loginForm.addEventListener("submit", async() => {
+				event.preventDefault();
+
+				console.log("Sending login")
+				const formData = new FormData(loginForm);
+
+				const response = await fetch("http://localhost:8000/token", {
+					method: "POST",
+					body: formData,
+				});
+				const decoded = await response.json()
+				console.log(decoded);
+				token = decoded['access_token'];
+			});
+
+			const testBtn = document.querySelector("#testme");
+
+			testBtn.addEventListener("click", async() => {
+				const headers = {'Authorization': "bearer "+ token};
+				const respone = await fetch("http://localhost:8000/users/me", {
+					headers
+				})
+				console.log(await respone.json());
+			})
+
+		}
+	</script>
+	<form id="loginform" method="POST" action="http://localhost:8000/token">
+		<label>Email</label>
+		<input type="text" id="username_ti" required placeholder="Your username", name="username">
+		<label>Password</label>
+		<input type="text" id="password-ti" requred placeholder="Password" name="password">
+		<button type="submit" id="login_btn">Login</button>
+	</form>
+	<div>
+		<button id="testme">Test Me</button>
+	</div>
+</body>
+
+</html>
