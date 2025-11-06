@@ -24,7 +24,7 @@
 				console.log("Sending login")
 				const formData = new FormData(loginForm);
 
-				fetch("http://localhost:8000/token", {
+				fetch("http://localhost:8000/users/token", {
 					method: "POST",
 					body: formData,
 				});
