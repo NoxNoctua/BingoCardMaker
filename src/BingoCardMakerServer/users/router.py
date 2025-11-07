@@ -4,8 +4,6 @@ This is the router for the user modual.
 This handle login and user validation
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
 from typing import Annotated, Optional
@@ -13,95 +11,66 @@ from typing import Annotated, Optional
 
 from starlette.requests import Request
 
+
+from datetime import timedelta
+from typing import Annotated
+
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jwt.exceptions import InvalidTokenError
+
+from . import schemas, utils
+from .. import dependencies
+from ..database import SessionLocal
+
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
+def get_db():
+	try:
+		db = SessionLocal()
+		yield db
+	finally:
+		db.close()
+
+
 router = APIRouter(
 	prefix="/users",
 	tags=["users"],
+	responses={40: {"description": "Invalid"}},
 )
 
-# MARK: temp sec
 
-fake_users_db = {
-	"johndoe": {
-		"username": "johndoe",
-		"full_name": "John Doe",
-		"email": "johndoe@example.com",
-		"hashed_password": "fakehashedsecret",
-		"disabled": False,
-	}
-}
 
-def fake_hash_password(password: str):
-	return "fakehashed" + password
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-class User(BaseModel):
-	username: str
-	email: str | None = None
-	full_name: str | None = None
-	disabled: bool | None = None
 
-class UserInDB(User):
-	hashed_password: str
-
-def get_user(db, username: str):
-	if username in db:
-		user_dict = db[username]
-		return UserInDB(**user_dict)
-
-def fake_decode_token(token):
-	user=get_user(fake_users_db, token)
-	return user
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-	user = fake_decode_token(token)
+@router.post("/token")
+async def login_for_access_token(
+	request: Request,
+	form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+	db=Depends(get_db)
+):
+	user = utils.authenticate_user(
+		db, form_data.username, form_data.password
+	)
 	if not user:
 		raise HTTPException(
 			status_code=status.HTTP_401_UNAUTHORIZED,
-			detail="Invalid authentication credentials",
-			headers={"WWW-Authenticate": "Bearer"}
+			detail="Incorrect username or password",
+			headers={"WWW-Authenticate": "Bearer"},
 		)
-	return user
+	access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+	access_token = utils.create_access_token(
+		data={"sub": user.username}, expires_delta=access_token_expires
+	)
+	request.session.update({"token": access_token})
+	return schemas.Token(access_token=access_token, token_type="bearer")
 
-async def get_current_active_user(
-	current_user: Annotated[User, Depends(get_current_user)],
-):
-	if current_user.disabled:
-		raise HTTPException(status_code=400, detail="Inactive user")
-	return current_user
-
-
-
-# MARK: end temp sec
-
-# MARK: temp sec calls
-@router.post("/token")
-async def login(
-	request: Request,
-	form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-	):
-	user_dict = fake_users_db.get(form_data.username)
-	if not user_dict:
-		raise HTTPException(status_code=400, detail="Incorrect username or password")
-	user = UserInDB(**user_dict)
-	hashed_password = fake_hash_password(form_data.password)
-	if not hashed_password == user.hashed_password:
-		raise HTTPException(status_code=400, detail="Incorrect username or password")
-	print(f"login in as: {user.username}")
-
-	request.session.update({"token": user.username})
-
-	return {"access_token": user.username, "token_type": "Bearer"}
 
 @router.get("/me")
 async def read_users_me(
-	request: Request,
+	current_user: Annotated[schemas.User, Depends(dependencies.get_current_active_user)],
 ):
-	print(request.session)
-	if not request.session:
-		raise HTTPException(
-			status_code=status.HTTP_401_UNAUTHORIZED,
-			detail="Not session token"
-		)
-	return request.session
-# MARK: end temp sec calls
+	return current_user
