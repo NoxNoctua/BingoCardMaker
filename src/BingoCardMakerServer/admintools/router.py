@@ -3,9 +3,28 @@ Router for the admin tools such as clearing the log and output files
 """
 import logging
 import os
-from fastapi import APIRouter, Response
+from typing import Annotated
+
+from fastapi import APIRouter, Response, Depends
+
+from . import crud, schemas
+from ..users import schemas as user_schemas
+from .. import dependencies
+from ..database import SessionLocal
 
 log = logging.getLogger(__name__)
+
+
+
+
+def get_db():
+	try:
+		db = SessionLocal()
+		yield db
+	finally:
+		db.close()
+
+
 
 router = APIRouter(
 	prefix="/admintools",
@@ -13,19 +32,33 @@ router = APIRouter(
 )
 
 @router.post("/setupdir")
-async def api_setUpDir():
+async def api_setUpDir(
+	current_user: Annotated[user_schemas.User, Depends(dependencies.get_active_admin_user)]
+):
 	setUpDir()
 	return Response(content="Setup dirs", media_type="text")
 
 @router.post("/clearlog")
-async def post_clearLog():
+async def post_clearLog(
+	current_user: Annotated[user_schemas.User, Depends(dependencies.get_active_admin_user)]
+):
 	clearLog()
 	return Response(content="Cleared logs.", media_type="text")
 
 @router.post("/clearoutput")
-async def post_clearOutput():
+async def post_clearOutput(
+	current_user: Annotated[user_schemas.User, Depends(dependencies.get_active_admin_user)]
+):
 	clearOutput()
 	return Response(content="Cleared output.", media_type="text")
+
+@router.get("/intsettings", response_model=list[schemas.IntSetting])
+async def get_intsettings(
+	current_user: Annotated[user_schemas.User, Depends(dependencies.get_current_active_user)],
+	db = Depends(get_db)
+):
+	return crud.get_int_settings_by_privilege(db, current_user.privilege_level)
+
 
 
 def setUpDir():

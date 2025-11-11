@@ -46,7 +46,7 @@ router = APIRouter(
 
 
 
-@router.post("/token")
+@router.post("/token", response_model=schemas.Token)
 async def login_for_access_token(
 	request: Request,
 	form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -69,8 +69,14 @@ async def login_for_access_token(
 	return schemas.Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/me")
+@router.get("/me", response_model=schemas.User)
 async def read_users_me(
 	current_user: Annotated[schemas.User, Depends(dependencies.get_current_active_user)],
 ):
-	return current_user
+	return schemas.User.model_validate(current_user)
+
+@router.get("/isadmin", response_model=schemas.User)
+async def read_user_isadmin(
+	current_user: Annotated[schemas.User, Depends(dependencies.get_active_admin_user)],
+):
+	return schemas.User.model_validate(current_user)

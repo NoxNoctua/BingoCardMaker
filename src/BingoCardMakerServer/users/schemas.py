@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class UserBase(BaseModel):
@@ -7,12 +7,16 @@ class UserBase(BaseModel):
 	full_name: str | None = None
 
 
+
 class UserCreate(UserBase):
 	password: str
 
 
 class User(UserBase):
+	model_config = ConfigDict(from_attributes=True)
 	disabled: bool | None = None
+	privilege_level: int | None = None
+
 
 
 class UserInDB(User):

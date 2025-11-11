@@ -8,6 +8,8 @@ from starlette.requests import Request
 
 from .users import utils, schemas, crud
 from .database import SessionLocal
+from . import constants as CONST
+from .exceptions import credentials_exception, notadmin_exception, inactive_user_exception
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
@@ -21,15 +23,13 @@ def get_db():
 		db.close()
 
 async def get_current_user(request: Request, db = Depends(get_db)):
-	credentials_exception = HTTPException(
-		status_code=status.HTTP_401_UNAUTHORIZED,
-		detail="Could not validate credentials",
-	)
 	if not request.session:
 		raise credentials_exception
+
 	payload = utils.decode_token(request.session["token"])
 	if payload is None:
 		raise credentials_exception
+
 	username: str = payload.get("sub")
 	if username is None:
 		raise credentials_exception
@@ -45,5 +45,12 @@ async def get_current_active_user(
 	current_user: Annotated[schemas.User, Depends(get_current_user)],
 ):
 	if current_user.disabled:
-		raise HTTPException(status_code=400, detail="Inactive user")
+		raise inactive_user_exception
+	return current_user
+
+async def get_active_admin_user(
+	current_user: Annotated[schemas.User, Depends(get_current_active_user)],
+):
+	if current_user.privilege_level != CONST.ADMIN_LEVEL:
+		raise notadmin_exception
 	return current_user
