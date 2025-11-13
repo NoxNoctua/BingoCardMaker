@@ -12,12 +12,16 @@ router = APIRouter(
 
 @router.get("/", response_class=HTMLResponse)
 async def generate_homepage_response():
-	with open("src/BingoCardMakerServer/MountedStatic/index.html") as f:
+	with open("src/bingocardMakerserver/MountedStatic/index.html") as f:
 		return f.read()
 
 @router.get("/login", response_class=HTMLResponse)
 async def generate_login_response():
-	with open("src/BingoCardMakerServer/MountedStatic/login.html") as f:
+	with open("src/bingocardMakerserver/MountedStatic/login.html") as f:
 		return f.read()
 
+@router.get("/editcardconfig", response_class=HTMLResponse)
+async def get_editcardconfig():
+	with open("src/bingocardMakerserver/MountedStatic/cardconfig.html") as f:
+		return f.read()
 

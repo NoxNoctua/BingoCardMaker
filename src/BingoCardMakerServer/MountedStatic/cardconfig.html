@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Bingo Card Maker</title>
+	<style>
+
+		#main {
+			display: grid;
+			grid-template-columns: 40% 60%; 
+			grid-template-rows: 10% 25% 25% auto;
+			background-color: gray;
+			border: 10px ridge darkgray;
+			padding: 20px;
+			width: 90%;
+			height: 1000px;
+			margin: auto;
+		}
+
+		#menu_title_div {
+			display: flex;
+			grid-column: 1;
+			grid-row: 1;
+			align-items: center;
+		}
+
+		#card_preview {
+			grid-column: 2;
+			grid-row-start: 1;
+			grid-row-end: 4;
+			background-color: gray;
+			border: 10px ridge darkgray;
+			padding: 5px;
+		}
+
+		#card_preview img {
+			display: block;
+			object-fit: contain;
+			height: 80%;
+			margin: auto;
+		}
+
+		#bool_settings_box {
+			grid-column: 1;
+			grid-row: 2;
+		}
+
+		#int_settings_box {
+			grid-column: 1;
+			grid-row: 3;
+		}
+
+		#str_settings_box {
+			grid-column-start: 1;
+			grid-column-end: 3;
+			grid-row: 4;
+		}
+
+		.int_input_label {
+			display: inline-block;
+			text-align: left;
+			width: 20ch;
+		}
+
+		.int_input {
+			width: 8ch;
+		}
+
+		.text_input {
+			width: 70%;
+		}
+
+		li {
+			list-style-type: none;
+			border: 1px inset black;
+			padding: 3px
+		}
+
+		.setting_section {
+			border: 2px outset black;
+			padding: 5px;
+		}
+
+		button {
+			display: block;
+			margin: auto;
+		}
+
+		h1 {
+			text-align: center;
+		}
+
+		.menu_buttons {
+			display: inline;
+			font-size: 20px;
+		}
+
+	
+	</style>
+</head>
+<body>
+	<script>
+		window.onload = function () {
+			const boolSettingList = document.querySelector("#bool_settings_box");
+			const intSettingList = document.querySelector("#int_settings_box");
+			const strSettingList = document.querySelector("#str_settings_box");
+
+
+			const bool_settings = fetch("http://localhost:8000/cardgen/boolsettings", {
+				method: "GET"
+			}).then(response => response.json())
+			.then(data => {
+				for (const setting of data) {
+					const listItem = document.createElement("li");
+					const checkBox = document.createElement("input");
+					checkBox.type = "checkbox";
+					checkBox.value = setting.name;
+					checkBox.name = setting.name;
+					if (setting.value) {
+						checkBox.checked = true;
+					}
+					else {
+						checkBox.checked = false;
+					}
+					const label = document.createElement("label");
+					label.htmlFor = setting.name;
+					label.innerText = setting.name;
+					listItem.appendChild(checkBox);
+					listItem.appendChild(label);
+					boolSettingList.appendChild(listItem);
+				}
+			})
+			.catch(console.error);
+
+			const intSettings = fetch("http://localhost:8000/cardgen/intsettings", {
+				method: "GET"
+			}).then(response => response.json())
+				.then(data => {
+					for (const setting of data) {
+						const listItem = document.createElement("li");
+						const checkBox = document.createElement("input");
+						checkBox.type = "number";
+						checkBox.value = setting.value;
+						checkBox.name = setting.name;
+						checkBox.className = "int_input";
+						const label = document.createElement("label");
+						label.htmlFor = setting.name;
+						label.innerText = setting.name;
+						label.className = "int_input_label"
+						listItem.appendChild(label);
+						listItem.appendChild(checkBox);
+						intSettingList.appendChild(listItem);
+					}
+				})
+				.catch(console.error);
+
+			const strSettings = fetch("http://localhost:8000/cardgen/strsettings", {
+				method: "GET"
+			}).then(response => response.json())
+				.then(data => {
+					for (const setting of data) {
+						const listItem = document.createElement("li");
+						const checkBox = document.createElement("input");
+						checkBox.type = "text";
+						checkBox.value = setting.value;
+						checkBox.name = setting.name;
+						checkBox.className = "text_input"
+						const label = document.createElement("label");
+						label.htmlFor = setting.name;
+						label.className = "int_input_label"
+						label.innerText = setting.name;
+						listItem.appendChild(label);
+						listItem.appendChild(checkBox);
+						strSettingList.appendChild(listItem);
+					}
+				})
+				.catch(console.error);
+			
+		}
+	</script>
+	<div id="main">
+		<div id="menu_title_div">
+			<h1 id="menu_title">Edit Card Config</h1>
+			<button class="menu_buttons">Save Changes</button>
+			<button class="menu_buttons">Export Config</button>
+			<button class="menu_buttons">Import Config</button>
+		</div>
+		<div id="bool_settings_box" class="setting_section">
+			<h2>Toggle Settings</h2>
+			<ul id="bool_settings_list"></ul>
+		</div>
+		<div id="int_settings_box" class="setting_section">
+			<h2>Int Settings</h2>
+			<ul id="int_settings_list"></ul>
+		</div>
+		<div id="str_settings_box" class="setting_section">
+			<h2>String Settings</h2>
+			<ul id="str_settings_list"></ul>
+		</div>
+		<div id="card_preview">
+			<h1>Preview</h1>
+			<img src="http://localhost:8000/cardgen/genpng"><br>
+			<button>Regenerate</button>
+		</div>
+	</div>
+</body>

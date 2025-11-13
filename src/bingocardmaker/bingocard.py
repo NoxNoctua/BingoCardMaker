@@ -3,6 +3,8 @@ import os
 import random
 from collections import namedtuple
 
+import logging
+
 from PIL import Image, ImageOps, ImageDraw
 import qrcode
 
@@ -11,6 +13,50 @@ from reportlab.lib.utils import ImageReader
 from reportlab.lib.colors import Color
 
 from logger.logger import Logger
+
+
+# MARK: Setting up logging
+
+class CustomFormatter(logging.Formatter):
+	grey = '\x1b[38;21m'
+	blue = '\x1b[38;5;39m'
+	yellow = '\x1b[38;5;226m'
+	red = '\x1b[38;5;196m'
+	bold_red = '\x1b[31;1m'
+	reset = '\x1b[0m'
+
+	def __init__(self, fmt):
+		super().__init__()
+		self.fmt = fmt
+		self.FORMATS = {
+			logging.DEBUG: self.grey + self.fmt + self.reset,
+			logging.INFO: self.blue + self.fmt + self.reset,
+			logging.WARNING: self.yellow + self.fmt + self.reset,
+			logging.ERROR: self.red + self.fmt + self.reset,
+			logging.CRITICAL: self.bold_red + self.fmt + self.reset,
+		}
+	
+	def format(self, record):
+		log_fmt = self.FORMATS.get(record.levelno)
+		formatter = logging.Formatter(log_fmt)
+		return formatter.format(record)
+
+lib_log_root = logging.getLogger("bingocardmaker")
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+
+log = logging.getLogger(__name__)
+
+
+formatter = CustomFormatter(
+	fmt="%(levelname)s:\t %(name)s %(message)s"
+)
+console_handler.setFormatter(formatter)
+
+lib_log_root.addHandler(console_handler)
+lib_log_root.setLevel(logging.DEBUG)
+
 
 logger = Logger()
 
@@ -21,63 +67,64 @@ logger = Logger()
 # TODO add to portfolio
 
 class BingoCard:
-	logger: Logger = None
-	# MARK: Named Tuples
-	BoardShape = namedtuple('BoardShape', 'cols rows')
-	CardSize = namedtuple('CardSize', 'width hight')
-	CardPadding = namedtuple('CardPadding', 'top right bottom left')
-	TileSize = namedtuple('TileSize', 'width hight')
-	Cord = namedtuple('Cord', 'x y')
-
-	# MARK: Defualt Config
-	configFilePath: str = os.path.join("resources", "config.json")
-	name: str = "Bingo Card Maker"
-	description: str = "Config Load failed"
-	poolDirectoryPath: str = "pool"
-	poolImageTypes: [str] = ["PNG"]
-	baseImagePath: str = "base.png"
-	freespaceImagePath: str = "freespace.png"
-	outputPath: str = "output"
-	boardShape: BoardShape = BoardShape(5,5)
-	numTiles = boardShape.cols * boardShape.rows
-	hasFreespace: bool = True
-	freespaceIndex: int = 12
-	cardSize: CardSize = CardSize(1000,1000)
-	cardPadding: CardPadding = CardPadding(0,0,100,0)
-	tileSize: TileSize = TileSize(50,50)
-	tileStartCor: Cord = Cord(50,50)
-	tilepading: int = 5
-	useBaseImage: bool = True
-	numOfCardsInBatch: int = 5
-	imageFileType: [str] = ["PNG", "PDF"]
-	bgColor: tuple = (255,255,255,255)
-	drawBoarder: bool = True
-	boarderColor: tuple = (0,0,0,255)
-	boarderWidth: int = 4
-	drawExtraInfo: bool = True
-	extraInfo: str = "This is a bingo randomizer card creater made by Nox Noxtua"
-	drawQRCode: bool = True
-	qrLink: str = "https://github.com/NoxNoctua/BingoCardMaker"
-	qrLocation: str = "BOTTOM_RIGHT"
-	drawWatermark: bool = True
-	watermarkFilePath: str = "watermark.png"
+	
 
 	def __init__(
 		self,
 		configFilePath=os.path.join("resources", "config.json"),
 		quiet=False
 	):
-		if self.logger is None:
-			self.logger = Logger() 
-		if quiet:
-			logger.active = False
-		log = logger.addTag("init BingoCard")
+		print(__name__)
+		self.logger: Logger = None
+		# MARK: Named Tuples
+		self.BoardShape = namedtuple('BoardShape', 'cols rows')
+		self.CardSize = namedtuple('CardSize', 'width hight')
+		self.CardPadding = namedtuple('CardPadding', 'top right bottom left')
+		self.TileSize = namedtuple('TileSize', 'width hight')
+		self.Cord = namedtuple('Cord', 'x y')
+
+		# MARK: Defualt Config
+		self.configFilePath: str = os.path.join("resources", "config.json")
+		self.name: str = "Bingo Card Maker"
+		self.description: str = "Config Load failed"
+		self.poolDirectoryPath: str = "pool"
+		self.poolImageTypes: [str] = ["PNG"]
+		self.baseImagePath: str = "base.png"
+		self.freespaceImagePath: str = "freespace.png"
+		self.outputPath: str = "output"
+		self.boardShape: self.BoardShape = self.BoardShape(5,5)
+		self.numTiles = self.boardShape.cols * self.boardShape.rows
+		self.hasFreespace: bool = True
+		self.freespaceIndex: int = 12
+		self.cardSize: self.CardSize = self.CardSize(1000,1000)
+		self.cardPadding: self.CardPadding = self.CardPadding(0,0,100,0)
+		self.tileSize: self.TileSize = self.TileSize(50,50)
+		self.tileStartCor: self.Cord = self.Cord(50,50)
+		self.tilepading: int = 5
+		self.useBaseImage: bool = True
+		self.numOfCardsInBatch: int = 5
+		self.imageFileType: [str] = ["PNG", "PDF"]
+		self.bgColor: tuple = (255,255,255,255)
+		self.drawBoarder: bool = True
+		self.boarderColor: tuple = (0,0,0,255)
+		self.boarderWidth: int = 4
+		self.drawExtraInfo: bool = True
+		self.extraInfo: str = "This is a bingo randomizer card creater made by Nox Noxtua"
+		self.drawQRCode: bool = True
+		self.qrLink: str = "https://github.com/NoxNoctua/BingoCardMaker"
+		self.qrLocation: str = "BOTTOM_RIGHT"
+		self.drawWatermark: bool = True
+		self.watermarkFilePath: str = "watermark.png"
+		
+		self.load_config_from_json_file(configFilePath, quiet)
+
+	def load_config_from_json_file(self, path: str, quiet=True):
 		# MARK: Load Config
 		try:
-			log.dbg(f"Opening config file {configFilePath}")
-			self.fp = open(configFilePath, "r")
+			log.debug(f"Opening config file {path}")
+			self.fp = open(path, "r")
 			self.config = json.load(self.fp)
-			log.dbg("loaded json")
+			log.debug("loaded json")
 			self.name = self.config["name"]
 			self.description = self.config["description"]
 			self.poolDirectoryPath = self.config["poolDirectoryPath"]
@@ -85,12 +132,12 @@ class BingoCard:
 			self.baseImagePath = self.config["baseImagePath"]
 			self.freespaceImagePath = self.config["freespaceImagePath"]
 			self.outputPath = self.config["outputPath"]
-			log.dbg("Trying to load boardshape")
+			log.debug("Trying to load boardshape")
 			self.boardShape = self.BoardShape(
 				self.config["boardShape"][0],
 				self.config["boardShape"][1]
 			)
-			log.dbg("Loaded boardshape")
+			log.debug("Loaded boardshape")
 			self.hasFreespace = self.config["hasFreespace"]
 			self.cardSize = self.CardSize(
 				self.config["cardSize"][0],
@@ -133,11 +180,10 @@ class BingoCard:
 			)
 
 		except Exception as e:
-			log.err("Loading the config failed")
-			log.err(str(e))
+			log.exception("Loading the config failed")
 		
-		log.inf(self.name)
-		log.inf(self.description)
+		log.info(self.name)
+		log.info(self.description)
 
 	# scan the pool dir and collect all the pngs
 	def loadpool(self, poolDirectoryPath: str=None) -> []:

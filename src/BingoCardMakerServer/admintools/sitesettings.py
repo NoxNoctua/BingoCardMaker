@@ -38,6 +38,8 @@ class SiteSettings:
 				crud.set_int_setting(db, name, value)
 			elif type(value) == str:
 				crud.set_str_setting(db, name, value)
+			elif type(value) == bool:
+				crud.set_str_setting(db, name, value)
 	
 
 	"""

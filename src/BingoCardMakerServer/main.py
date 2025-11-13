@@ -1,59 +1,65 @@
 import os
-
 import logging
 
-from typing import Annotated, Optional
-
-from fastapi import FastAPI, Response, HTTPException, status, Depends
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.requests import Request
 
-
-from bingocardmaker import bingocard
-
-from logger.logger import Logger
+import uvicorn
 
 from .users.router import router as user_router
 from .pages.router import router as page_router
 from .admintools.router import router as admintools_router
+from .cardgen.router import router as cardgen_router
+
+# MARK: Setting up logging
+
+class CustomFormatter(logging.Formatter):
+	grey = '\x1b[38;21m'
+	blue = '\x1b[38;5;39m'
+	yellow = '\x1b[38;5;226m'
+	red = '\x1b[38;5;196m'
+	bold_red = '\x1b[31;1m'
+	reset = '\x1b[0m'
+
+	def __init__(self, fmt):
+		super().__init__()
+		self.fmt = fmt
+		self.FORMATS = {
+			logging.DEBUG: self.grey + self.fmt + self.reset,
+			logging.INFO: self.blue + self.fmt + self.reset,
+			logging.WARNING: self.yellow + self.fmt + self.reset,
+			logging.ERROR: self.red + self.fmt + self.reset,
+			logging.CRITICAL: self.bold_red + self.fmt + self.reset,
+		}
+	
+	def format(self, record):
+		log_fmt = self.FORMATS.get(record.levelno)
+		formatter = logging.Formatter(log_fmt)
+		return formatter.format(record)
+
+project_root_log = logging.getLogger("bingocardmakerserver")
+lib_log_root = logging.getLogger("bingocardmaker")
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
 
 log = logging.getLogger(__name__)
-log.addHandler(logging.StreamHandler())
-log.addHandler(logging.FileHandler(
-	filename="log.txt",
-	mode="a",
-	encoding="utf-8"
-))
 
 
-RESOURCE_PATH = os.path.join(".", "resources")
-POOL_PATH = os.path.join(RESOURCE_PATH, "pool")
-OUTPUT_PATH = os.path.join(RESOURCE_PATH, "output")
-LOG_PATH = "log.txt"
+formatter = CustomFormatter(
+	fmt="%(levelname)s:\t %(name)s %(message)s"
+)
+console_handler.setFormatter(formatter)
 
+project_root_log.addHandler(console_handler)
+project_root_log.setLevel(logging.DEBUG)
 
+lib_log_root.addHandler(console_handler)
+lib_log_root.setLevel(logging.DEBUG)
 
-# MARK: MakerServer
-class MakerServer:
-	card: bingocard.BingoCard = bingocard.BingoCard()
-	cardNum: int = 0
-
-
-	def __init__(self):
-		pass
-
-	def genCard(self, fileType: str ="PNG") -> (str, int):
-		log.info(f"Generating card: {self.cardNum}")
-		path = self.card.genCard(id=self.cardNum, fileType=fileType)
-		
-		self.cardNum += 1
-
-		return (path, self.cardNum-1)
-
+# MARK: Setting up app
 
 app = FastAPI()
 
@@ -84,34 +90,4 @@ app.add_middleware(
 app.include_router(user_router)
 app.include_router(page_router)
 app.include_router(admintools_router)
-
-makerServer = MakerServer()
-
-
-
-
-
-# Managment
-# TODO move this to a router
-# MARK: management
-
-# puzzle
-# TODO move this to a router
-# MARK: puzzle
-@app.get("/puzzle/genpng")
-async def get_genPuzzlePNG():
-	path, id = makerServer.genCard(fileType="PNG")
-	#return Response(content=path, media_type="text")
-	return FileResponse(path)
-
-@app.get("/puzzle/genpdf")
-async def get_genPuzzlePDF():
-	path, id = makerServer.genCard(fileType="PDF")
-	#return Response(content=path, media_type="text")
-	return FileResponse(path)
-
-
-
-
-# MARK: managment Content
-# sets up the resource paths for the pool and output
+app.include_router(cardgen_router)
