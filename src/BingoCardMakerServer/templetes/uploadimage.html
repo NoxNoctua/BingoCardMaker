@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>{{ page_title }}</title>
+	<link rel="stylesheet" href="{{ url_for('static', path='root_style.css') }}">
+	<style>
+				
+		#file_input {
+			grid-row: 1;
+			grid-column: 1;
+			margin: auto;
+		}
+	
+	</style>
+</head>
+
+<body>
+	{% include 'header.html' %}
+	<div id="main" class="main_div_style">
+		<form id="upload_image_form" class="default_form_style" method="post" action="{{ domain_url }}/poolmanagment/uploadimg" enctype="multipart/form-data">
+			<h1>Upload an Image</h1>
+			<div class="input_div">
+				<input type="file" id="file_input" name="file" required>
+			</div>
+			<div class="input_div">
+				<label class="text_input_label">Name</label>
+				<input type="text" name="name" required placeholder="new image">
+			</div>
+			<div class="input_div">
+				<label class="text_input_label">Tag</label>
+				<input type="text" name="tag" required placeholder="default">
+			</div>
+			<div class="input_div">
+				<input type="checkbox" name="for_pool" checked="true">
+				<label>Add to pool</label>
+			</div>
+			<div class="input_div">
+				<input type="checkbox" name="active" checked="true">
+				<label>Active</label>
+			</div>
+			<button type="submit">Upload</button>
+		</form>
+	</div>
+</body>

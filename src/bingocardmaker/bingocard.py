@@ -187,8 +187,7 @@ class BingoCard:
 
 	# scan the pool dir and collect all the pngs
 	def loadpool(self, poolDirectoryPath: str=None) -> []:
-		log = logger.addTag("loadpool")
-		log.inf("Loading pool")
+		log.info("Loading pool")
 		pool = []
 
 		if poolDirectoryPath is None:
@@ -202,15 +201,14 @@ class BingoCard:
 		try:
 			with os.scandir(poolDirectoryPath) as poolDir:
 				for e in poolDir:
-					log.dbg(e.name)
+					log.debug(e.name)
 					if e.name.endswith(fileEndings):
 						pool.append(e)
 		except Exception as e:
-			log.err("Could not scan pool dir")
-			log.err(str(e))
+			log.exception("Could not scan pool dir")
 			raise Exception()
 		
-		log.inf("Found {} tiles in pool".format(len(pool)))
+		log.info("Found {} tiles in pool".format(len(pool)))
 
 		return pool
 

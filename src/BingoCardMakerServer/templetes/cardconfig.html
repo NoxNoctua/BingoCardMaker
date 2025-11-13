@@ -5,7 +5,8 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>Bingo Card Maker</title>
+	<title>{{ page_title }}</title>
+	<link rel="stylesheet" href="{{ url_for('static', path='root_style.css') }}">
 	<style>
 
 		#main {
@@ -73,7 +74,7 @@
 			width: 70%;
 		}
 
-		li {
+		.input_list_item {
 			list-style-type: none;
 			border: 1px inset black;
 			padding: 3px
@@ -109,12 +110,13 @@
 			const strSettingList = document.querySelector("#str_settings_box");
 
 
-			const bool_settings = fetch("http://localhost:8000/cardgen/boolsettings", {
+			const bool_settings = fetch("{{ domain_url }}/cardgen/boolsettings", {
 				method: "GET"
 			}).then(response => response.json())
 			.then(data => {
 				for (const setting of data) {
 					const listItem = document.createElement("li");
+					listItem.className = "input_list_item"
 					const checkBox = document.createElement("input");
 					checkBox.type = "checkbox";
 					checkBox.value = setting.name;
@@ -135,12 +137,13 @@
 			})
 			.catch(console.error);
 
-			const intSettings = fetch("http://localhost:8000/cardgen/intsettings", {
+			const intSettings = fetch("{{ domain_url }}/cardgen/intsettings", {
 				method: "GET"
 			}).then(response => response.json())
 				.then(data => {
 					for (const setting of data) {
 						const listItem = document.createElement("li");
+						listItem.className = "input_list_item"
 						const checkBox = document.createElement("input");
 						checkBox.type = "number";
 						checkBox.value = setting.value;
@@ -157,12 +160,13 @@
 				})
 				.catch(console.error);
 
-			const strSettings = fetch("http://localhost:8000/cardgen/strsettings", {
+			const strSettings = fetch("{{ domain_url }}/cardgen/strsettings", {
 				method: "GET"
 			}).then(response => response.json())
 				.then(data => {
 					for (const setting of data) {
 						const listItem = document.createElement("li");
+						listItem.className = "input_list_item"
 						const checkBox = document.createElement("input");
 						checkBox.type = "text";
 						checkBox.value = setting.value;
@@ -181,6 +185,7 @@
 			
 		}
 	</script>
+	{% include 'header.html' %}
 	<div id="main">
 		<div id="menu_title_div">
 			<h1 id="menu_title">Edit Card Config</h1>
@@ -202,7 +207,7 @@
 		</div>
 		<div id="card_preview">
 			<h1>Preview</h1>
-			<img src="http://localhost:8000/cardgen/genpng"><br>
+			<img src="{{ domain_url }}/cardgen/genpng"><br>
 			<button>Regenerate</button>
 		</div>
 	</div>

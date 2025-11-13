@@ -17,6 +17,7 @@ def init_db():
 	from bingocardmakerserver.users import models as users_models  # noqa: F401
 	from bingocardmakerserver.admintools import models as admintools_models # noqa F401
 	from bingocardmakerserver.cardgen import models as cardgen_models # noqa F401
+	from bingocardmakerserver.poolmanagment import models as poolmanagment_models # noqa F401
 	
 
 	entity_manager.Base.metadata.create_all(entity_manager.engine)

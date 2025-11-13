@@ -5,8 +5,8 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>Bingo Card Maker</title>
-	<link rel="stylesheet" href="style.css">
+	<title>{{ page_title }}</title>
+	<link rel="stylesheet" href="{{ url_for('static', path='root_style.css') }}">
 </head>
 
 <body>
@@ -24,7 +24,7 @@
 				console.log("Sending login")
 				const formData = new FormData(loginForm);
 
-				fetch("http://localhost:8000/users/token", {
+				fetch("{{ domain_name }}/users/token", {
 					method: "POST",
 					body: formData,
 				});
@@ -33,7 +33,7 @@
 
 			testBtn.addEventListener("click", async() => {
 				const headers = {'Authorization': "bearer "+ token};
-				const respone = await fetch("http://localhost:8000/users/me", {
+				const respone = await fetch("{{ domain_name }}/users/me", {
 					
 				})
 				console.log(await respone.json());
@@ -41,15 +41,23 @@
 
 		}
 	</script>
-	<form id="loginform" method="POST" action="http://localhost:8000/token">
-		<label>Email</label>
-		<input type="text" id="username_ti" required placeholder="Your username", name="username"><br>
-		<label>Password</label>
-		<input type="text" id="password-ti" requred placeholder="Password" name="password"><br>
-		<button type="submit" id="login_btn">Login</button>
-	</form>
-	<div>
-		<button id="testme">Test Me</button>
+	{% include 'header.html' %}
+	<div class="main_div_style">
+		<form id="loginform" class="default_form_style" method="POST" action="{{ domain_name }}/token">
+			<h1>Login</h1>
+			<div class="input_div">
+				<label class="text_input_label">Email</label>
+				<input type="text" id="username_ti" required placeholder="Your username" , name="username">
+			</div>
+			<div class="input_div">
+				<label class="text_input_label">Password</label>
+				<input type="text" id="password-ti" requred placeholder="Password" name="password">
+			</div>
+			<button type="submit" id="login_btn">Login</button>
+		</form>
+		<div>
+			<button id="testme">Test Me</button>
+		</div>
 	</div>
 </body>
 

@@ -6,3 +6,4 @@ output/
 /dist
 **/*.pyc
 **/*.sqlite
+resources/bingo_database.sqlite

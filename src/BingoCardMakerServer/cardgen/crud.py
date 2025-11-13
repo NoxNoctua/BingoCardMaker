@@ -39,7 +39,7 @@ def set_int_setting(db: Session, name: str, value: int) -> bool:
 	try:
 		setting = db.scalar(
 			select(models.IntSetting)
-			.where(name==name)
+			.where(models.IntSetting.name==name)
 		).one()
 		if setting is not None:
 			setting = value
@@ -58,7 +58,7 @@ def get_int_setting(db: Session, name: str) -> Optional[models.IntSetting]:
 	try:
 		setting = db.scalar(
 			select(models.IntSetting)
-			.where(name==name)
+			.where(models.IntSetting.name==name)
 		).one()
 		if setting is not None:
 			return setting
@@ -76,7 +76,7 @@ def get_int_settings_by_privilege(db: Session, level: int) -> Optional[list[mode
 	try:
 		settings = db.scalars(
 			select(models.IntSetting)
-			.where(level>=level)
+			.where(models.IntSetting.required_privilege_level>=level)
 		).all()
 		if settings is not None:
 			return settings
@@ -130,7 +130,7 @@ def set_str_setting(db: Session, name: str, value: str) -> bool:
 	try:
 		setting = db.scalar(
 			select(models.StrSetting)
-			.where(name==name)
+			.where(models.StrSetting.name==name)
 		).one()
 		if setting is not None:
 			setting = value
@@ -149,7 +149,7 @@ def get_str_setting(db: Session, name: str) -> Optional[models.StrSetting]:
 	try:
 		setting = db.scalar(
 			select(models.StrSetting)
-			.where(name==name)
+			.where(models.StrSetting.name==name)
 		).one()
 		if setting is not None:
 			return setting
@@ -167,7 +167,7 @@ def get_str_settings_by_privilege(db: Session, level: str) -> Optional[list[mode
 	try:
 		settings = db.scalars(
 			select(models.StrSetting)
-			.where(level>=level)
+			.where(models.StrSetting.required_privilege_level>=level)
 		).all()
 		if settings is not None:
 			return settings
@@ -221,7 +221,7 @@ def set_bool_setting(db: Session, name: str, value: bool) -> bool:
 	try:
 		setting = db.scalar(
 			select(models.BoolSetting)
-			.where(name==name)
+			.where(models.BoolSetting.name==name)
 		).one()
 		if setting is not None:
 			setting = value
@@ -240,7 +240,7 @@ def get_bool_setting(db: Session, name: str) -> Optional[models.BoolSetting]:
 	try:
 		setting = db.scalar(
 			select(models.BoolSetting)
-			.where(name==name)
+			.where(models.BoolSetting.name==name)
 		).one()
 		if setting is not None:
 			return setting
@@ -258,7 +258,7 @@ def get_bool_settings_by_privilege(db: Session, level: str) -> Optional[list[mod
 	try:
 		settings = db.scalars(
 			select(models.BoolSetting)
-			.where(level>=level)
+			.where(models.BoolSetting.required_privilege_level>=level)
 		).all()
 		if settings is not None:
 			return settings

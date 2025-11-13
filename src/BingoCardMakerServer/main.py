@@ -12,6 +12,7 @@ from .users.router import router as user_router
 from .pages.router import router as page_router
 from .admintools.router import router as admintools_router
 from .cardgen.router import router as cardgen_router
+from .poolmanagment.router import router as poolmanagment_router
 
 # MARK: Setting up logging
 
@@ -49,7 +50,7 @@ log = logging.getLogger(__name__)
 
 
 formatter = CustomFormatter(
-	fmt="%(levelname)s:\t %(name)s %(message)s"
+	fmt="%(levelname)s:\t %(name)s\t| %(message)s"
 )
 console_handler.setFormatter(formatter)
 
@@ -91,3 +92,4 @@ app.include_router(user_router)
 app.include_router(page_router)
 app.include_router(admintools_router)
 app.include_router(cardgen_router)
+app.include_router(poolmanagment_router)

@@ -18,8 +18,8 @@ class SiteSettings:
 		log.debug("Initing SiteSettings")
 
 		# Str Settings
-		self.site_title: str = "Bingo Card Maker"
-		self.site_url: str = "localhost:8000"
+		self.site_title: str = "Bingo Maker Default"
+		self.site_url: str = "http://localhost:8000"
 		self.resources_dir_path: str = "./resources"
 		
 
