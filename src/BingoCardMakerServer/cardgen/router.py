@@ -38,12 +38,16 @@ router = APIRouter(
 
 # MARK: puzzle
 @router.get("/genpng")
-async def get_genPuzzlePNG():
+async def get_genPuzzlePNG(db = Depends(get_db)):
+	if len(maker_manager.pool) == 0:
+		maker_manager.set_pool_by_tag(db, "default")
 	path, id = maker_manager.genCard(fileType="PNG")
 	return FileResponse(path)
 
 @router.get("/genpdf")
-async def get_genPuzzlePDF():
+async def get_genPuzzlePDF(db = Depends(get_db)):
+	if len(maker_manager.pool) == 0:
+		maker_manager.set_pool_by_tag(db, "default")
 	path, id = maker_manager.genCard(fileType="PDF")
 	return FileResponse(path)
 

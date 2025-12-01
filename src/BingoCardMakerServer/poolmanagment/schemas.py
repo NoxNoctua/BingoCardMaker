@@ -7,6 +7,7 @@ class PoolImage(BaseModel):
 	model_config = ConfigDict(from_attributes=True)
 	name: str
 	file_path: str
+	thumbnail_path: str
 	tag: str
 	active: bool
 

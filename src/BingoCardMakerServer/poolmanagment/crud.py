@@ -1,4 +1,4 @@
-import logging
+import logging, os
 
 from typing import Optional
 
@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, delete
 
 from . import models, schemas
+from .. import constants
 
 log = logging.getLogger(__name__)
 
@@ -56,11 +57,31 @@ def get_all_images(db: Session) -> Optional[list[models.PoolImage]]:
 		imgs = db.scalars(
 			select(models.PoolImage)
 		).all()
+
+		for img in imgs:
+			img.thumbnail_path = os.path.join(
+				constants.THUMBNAIL_PATH,
+				os.path.basename(img.file_path)
+			)
+
 		return imgs
 	except Exception as e:
 		log.exception("Could not get all images from db")
 		return None
 
+"""
+Get list of images by their tag
+"""
+def get_images_by_tag(db:Session, tag: str) -> Optional[list[models.PoolImage]]:
+	log.debug(f"getting images with tag {tag}")
+	try:
+		imgs = db.scalars(
+			select(models.PoolImage)
+			.where(models.PoolImage.tag.contains(tag) & models.PoolImage.active==True)
+		).all()
+		return imgs
+	except Exception as e:
+		log.exception("Could not load pool by tag")
 
 
 """
@@ -103,3 +124,23 @@ def update_image_data(db: Session, img: schemas.UpdateImageForm) -> bool:
 	except Exception as e:
 		log.exception("Could not update imgage infomation")
 		return False
+
+"""
+Toggles a tiles state
+"""
+def set_tile_toggle(db: Session, img_name: str, value: bool):
+	log.debug(f"toggling image {img_name} to {value}")
+	try:
+		img_in_db = db.scalars(
+			select(models.PoolImage)
+			.where(models.PoolImage.name == img_name)
+		).one_or_none()
+
+		if img_in_db is None:
+			return False
+		
+		img_in_db.active = value
+
+		db.commit()
+	except Exception as e:
+		log.exception(e)

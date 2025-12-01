@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>{{ page_title }}</title>
+	<link rel="stylesheet" href="{{ url_for('static', path='root_style.css') }}">
+	<style>
+		
+	</style>
+</head>
+
+<body>
+	<script>
+		window.onload = function () {
+			const poolimgsDiv = document.querySelector("#pool_imgs");
+
+			// Generate menus for each tile
+			const imageList = fetch(
+				"{{ domain_url }}/poolmanagment/allpoolimgs",
+				{ method: "GET"	}
+			).then(response => response.json())
+			.then(
+				data=>{
+					for( const img of data) {
+						const imgDiv = document.createElement("div");
+						imgDiv.className = "sub_div";
+
+						line1Div = document.createElement("div");
+						line1Div.style="Display:Flex;"
+						line2Div = document.createElement("div");
+						line2Div.style = "Display:Flex;"
+
+						const imgName = document.createElement("label");
+						imgName.innerText = img.name;
+						imgName.className = "vcenter_label"
+						imgName.classList.add("medium_label")
+
+						const imgToggleActive = document.createElement("input");
+						imgToggleActive.type = "checkbox";
+						imgToggleActive.value = img.name;
+						if (img.active) {
+							imgToggleActive.checked = true;
+						}
+						else {
+							imgToggleActive.checked = false;
+						}
+						imgToggleActive.className="medium_checkbox"
+						imgToggleActive.addEventListener('change', function () {
+							console.log("toggling: " + imgToggleActive.value)
+							fetch(
+								"{{ domain_url }}/poolmanagment/toggletile/" + imgToggleActive.value + "/" + imgToggleActive.checked,
+								{ method: "POST" }
+							)
+						})
+
+						const imgImg = document.createElement("img");
+						imgImg.src = "{{ domain_url }}/poolmanagment/poolimgthumbfrompath/"+img.file_path;
+						imgImg.className = "thumbnail"
+						imgImg.style="width:64px;height:auto;"
+
+						const imgDelete = document.createElement("button");
+						imgDelete.classList = "small_button";
+						imgDelete.innerText = "Delete"
+
+						line1Div.appendChild(imgToggleActive);
+						line1Div.appendChild(imgName);
+						line1Div.appendChild(imgImg);
+						line1Div.appendChild(imgDelete);
+
+						imgDiv.appendChild(line1Div);
+
+						const tags = img.tag.split(",");
+						for (t of tags) {
+							const tagButton = document.createElement("button");
+							tagButton.className = "tiny_button";
+							tagButton.innerText = t+" [X]";
+							line2Div.appendChild(tagButton);
+						}
+						const addTagButton = document.createElement("button");
+						addTagButton.classList.add("tiny_button");
+						addTagButton.innerText = "+";
+						line2Div.appendChild(addTagButton);
+
+						imgDiv.appendChild(line2Div);
+
+						poolimgsDiv.appendChild(imgDiv);
+					}
+				});
+
+		}//window load
+	</script>
+	{% include 'header.html' %}
+	<div id="main_div" class="main_div_style">
+		<div id="pool_imgs">
+
+		</div>
+	</div>
+</body>

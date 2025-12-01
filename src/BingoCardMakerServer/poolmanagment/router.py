@@ -13,6 +13,7 @@ from . import schemas, crud, utils
 from ..database import SessionLocal
 from ..exceptions import image_path_not_in_db, bad_image_file
 from .. import constants
+from ..cardgen.makermanager import maker_manager
 
 
 log = logging.getLogger(__name__)
@@ -45,6 +46,20 @@ def get_pool_image_from_path(image_path: str, db=Depends(get_db)):
 	image_in_db = crud.get_image_by_path(db,image_path)
 	if image_in_db is not None:
 		return FileResponse(image_path)
+	else:
+		raise image_path_not_in_db
+
+@router.get("/poolimgthumbfrompath/{thumb_path:path}", response_class=FileResponse)
+def get_pool_img_thumb_from_path(thumb_path: str, db=Depends(get_db)):
+	image_in_db = crud.get_image_by_path(
+		db,
+		os.path.join(
+			constants.POOL_PATH,
+			os.path.basename(thumb_path)
+		)
+	)
+	if image_in_db is not None:
+		return FileResponse(thumb_path)
 	else:
 		raise image_path_not_in_db
 
@@ -91,3 +106,16 @@ async def post_upload_pool_img(
 		)
 
 	return {"Result": "OK"}
+
+@router.post("/rebuildthumbnails")
+def post_rebuildthumbnails():
+	utils.recreate_thumbnails()
+
+@router.post("/toggletile/{name}/{value}")
+def post_toggle_tile(name: str, value: bool, db=Depends(get_db)):
+	crud.set_tile_toggle(db,name,value)
+
+@router.post("/updateactivepool")
+def post_update_active_pool(db=Depends(get_db)):
+	maker_manager.set_pool_by_tag(db, "default")
+ 

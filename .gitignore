@@ -1,6 +1,7 @@
 pool/
 log.txt
 output/
+thumbnails/
 /builds
 /build
 /dist

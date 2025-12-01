@@ -2,12 +2,17 @@ import logging, os
 
 from sqlalchemy.orm import Session
 
+from PIL import Image
+
 from . import crud, models, schemas
 
 from .. import constants
 
 log = logging.getLogger(__name__)
 
+"""
+Scans the pool directory and adds any untracked images to the database.
+"""
 def upload_pool_to_db(db: Session):
 	log.info("Updating database with pool images")
 	# get all images in pool
@@ -44,3 +49,42 @@ def upload_pool_to_db(db: Session):
 				)
 			)
 	return True
+
+"""
+Takes image path resized it to thumbnail size and saves it to thumbnails then returns thumbnail path
+"""
+def create_thumbnail(image_path: str) -> str:
+	size = 64, 64
+	try:
+		with Image.open(image_path) as img:
+			img.thumbnail(size)
+			thumbnail_path = os.path.join(
+				constants.THUMBNAIL_PATH,
+				os.path.basename(image_path)
+			)
+			log.debug(f"making thumbnail {thumbnail_path}")
+			img.save(thumbnail_path)
+	except Exception as e:
+		log.exception(e)
+
+"""
+Clears thumbnail dir and recreates all pool image thumbnails
+"""
+def recreate_thumbnails() -> None:
+	try:
+		log.info("Clearning Thumbnail dir")
+		with os.scandir(constants.THUMBNAIL_PATH) as thumb_path:
+			for thumb in thumb_path:
+				log.debug(thumb.name)
+				os.remove(thumb.path)
+	except Exception as e:
+		log.error("Failed to clear Thumbnail dir")
+		log.exception(e)
+	
+	log.info("Rebuilding Thumbnails")
+	try:
+		with os.scandir(constants.POOL_PATH) as pool_dir:
+			for img_path in pool_dir:
+				create_thumbnail(img_path.path)
+	except Exception as e:
+		log.exception(e)

@@ -55,3 +55,10 @@ async def get_uploadimage(request: Request):
 		context=root_template_context
 	)
 
+@router.get("/managepool", response_class=HTMLResponse)
+async def get_uploadimage(request: Request):
+	return templates.TemplateResponse(
+		request=request,
+		name="poolmanagment.html",
+		context=root_template_context
+	)

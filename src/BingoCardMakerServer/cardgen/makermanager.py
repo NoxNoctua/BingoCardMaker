@@ -3,7 +3,7 @@ import logging
 from bingocardmaker import bingocard
 
 from . import crud, schemas
-
+from ..poolmanagment import crud as poolcrud
 
 log = logging.getLogger(__name__)
 
@@ -13,15 +13,21 @@ class MakerManager:
 		log.debug("initlizing makermanager")
 		self.card: bingocard.BingoCard = bingocard.BingoCard()
 		self.cardNum: int = 0
+		self.pool = []
 
 	def genCard(self, fileType: str ="PNG") -> (str, int):
 		log.info(f"Generating card: {self.cardNum}")
-		path = self.card.genCard(id=self.cardNum, fileType=fileType)
+		path = self.card.genCard(pool=self.pool, id=self.cardNum, fileType=fileType)
 		
 		self.cardNum += 1
 
 		return (path, self.cardNum-1)
 
+	def set_pool_by_tag(self, db, tag:str):
+		self.pool = poolcrud.get_images_by_tag(db, tag)
+		for t in self.pool:
+			t.path = t.file_path
+		log.info(f"pool is: {self.pool}")
 
 	"""
 	using this class as a dictionary save all of its atributes to the db
