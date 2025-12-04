@@ -39,16 +39,18 @@ def upload_pool_to_db(db: Session):
 		
 		# otherwise upload to db with default tags
 		if img_in_db is None:
-			crud.add_image_to_db(
+			if not crud.add_image_to_db(
 				db,
 				schemas.PoolImage(
 					name=img_path.name,
 					file_path=img_path.path,
 					thumbnail_path=os.path.join(constants.THUMBNAIL_PATH, img_path.name),
 					tag="default",
-					active=True
+					active=True,
+					use_type="pool"
 				)
-			)
+			):
+				return False
 			create_thumbnail(img_path.path)
 	return True
 
@@ -69,24 +71,35 @@ def create_thumbnail(image_path: str) -> str:
 	except Exception as e:
 		log.exception(e)
 
+
 """
-Clears thumbnail dir and recreates all pool image thumbnails
+Clears the thubnail dir
 """
-def recreate_thumbnails() -> None:
+def clear_thumbnails() -> bool:
 	try:
 		log.info("Clearning Thumbnail dir")
 		with os.scandir(constants.THUMBNAIL_PATH) as thumb_path:
 			for thumb in thumb_path:
 				log.debug(thumb.name)
 				os.remove(thumb.path)
+		return True
 	except Exception as e:
-		log.error("Failed to clear Thumbnail dir")
-		log.exception(e)
+		log.exception("Failed to clear Thumbnail dir")
+		return False
+
+"""
+Clears thumbnail dir and recreates all pool image thumbnails
+"""
+def recreate_thumbnails() -> bool:
+	if not clear_thumbnails():
+		return False
 	
 	log.info("Rebuilding Thumbnails")
 	try:
 		with os.scandir(constants.POOL_PATH) as pool_dir:
 			for img_path in pool_dir:
 				create_thumbnail(img_path.path)
+		return True
 	except Exception as e:
-		log.exception(e)
+		log.exception("Failed to rebuild Thumbnails")
+		return False

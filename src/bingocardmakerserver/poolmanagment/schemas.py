@@ -8,6 +8,7 @@ class PoolImage(BaseModel):
 	name: str
 	file_path: str
 	thumbnail_path: str
+	use_type:str
 	tag: str
 	active: bool
 
@@ -16,7 +17,7 @@ class UploadImageForm(BaseModel):
 	name: str
 	tag: str
 	active: bool
-	for_pool: bool
+	use_type: str
 	file: Annotated[UploadFile, File()]
 
 class UpdateImageForm(BaseModel):

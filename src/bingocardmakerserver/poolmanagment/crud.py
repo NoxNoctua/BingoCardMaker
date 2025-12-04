@@ -20,7 +20,8 @@ def add_image_to_db(db:Session,image: schemas.PoolImage) -> bool:
 			name=image.name,
 			file_path=image.file_path,
 			tag=image.tag,
-			active=image.active
+			active=image.active,
+			use_type=image.use_type
 		)
 		db.add(new_image)
 		db.commit()
@@ -68,6 +69,26 @@ def get_image_by_path(db:Session, path:str) -> Optional[models.PoolImage]:
 		return None
 
 """
+Get image by name
+"""
+def get_image_by_name(db:Session, name:str) -> Optional[models.PoolImage]:
+	log.debug(f"Looking for image {name}")
+	try:
+		img = db.scalars(
+			select(models.PoolImage)
+			.where(models.PoolImage.name==name)
+		).one_or_none()
+		
+		if img is not None:
+			return img
+		else:
+			log.debug(f"Could not find image {name}")
+			return None
+	except Exception as e:
+		log.exception("Could not look up image by name")
+		return None
+
+"""
 Get list of images in db
 """
 def get_all_images(db: Session) -> Optional[list[models.PoolImage]]:
@@ -96,7 +117,7 @@ def get_images_by_tag(db:Session, tag: str) -> Optional[list[models.PoolImage]]:
 	try:
 		imgs = db.scalars(
 			select(models.PoolImage)
-			.where(models.PoolImage.tag.contains(tag) & models.PoolImage.active==True)
+			.where(models.PoolImage.tag.contains(tag))
 		).all()
 		return imgs
 	except Exception as e:

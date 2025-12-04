@@ -35,12 +35,16 @@ router = APIRouter(
 
 @router.post("/updatedbfrompool")
 def post_update_db_from_pool(db=Depends(get_db)) -> bool:
-	result = utils.upload_pool_to_db(db)
-	return result
+	if utils.upload_pool_to_db(db):
+		return True
+	else:
+		return exception.internal_error
 
 @router.get("/allpoolimgs", response_model=list[schemas.PoolImage])
 def get_all_pool_imgs(db=Depends(get_db)):
-	return crud.get_all_images(db)
+	images = crud.get_all_images(db)
+	images.sort(key=lambda x: x.name)
+	return images
 
 @router.get("/poolimgfrompath/{image_path:path}", response_class=FileResponse)
 def get_pool_image_from_path(image_path: str, db=Depends(get_db)):
@@ -64,6 +68,16 @@ def get_pool_img_thumb_from_path(thumb_path: str, db=Depends(get_db)):
 	else:
 		raise image_path_not_in_db
 
+@router.get("/poolimgthumbbyname/{thumb_name}", response_class=FileResponse)
+def get_pool_img_thumb_by_name(thumb_name: str, db=Depends(get_db)):
+	image_in_db = crud.get_image_by_name(db, thumb_name)
+	if image_in_db is not None:
+		return FileResponse(
+			os.path.join(constants.THUMBNAIL_PATH, thumb_name)
+		)
+	else:
+		raise image_path_not_in_db
+
 @router.get("/poolimgtags")
 def get_pool_img_tags(db=Depends(get_db)) -> list[str]:
 	return crud.get_all_tags(db)
@@ -76,11 +90,9 @@ async def post_upload_pool_img(
 	log.info(f"Got file with name {data.file.filename}")
 	log.debug(f"name: {data.name} | tag: {data.tag} | active: {data.active} | type: {data.file.content_type}")
 
-	image_path = os.path.join(constants.RESOURCE_PATH, data.file.filename)
-	if data.for_pool:
-		image_path = os.path.join(constants.POOL_PATH, data.file.filename)
+	image_path = os.path.join(constants.POOL_PATH, data.file.filename)
 
-	# TODO fixcheck for file type
+	# TODO fixcheck for file type to allow more / configured options
 	if data.file.content_type == "image/png":
 		with open(image_path, "wb") as out_file:
 			while content := await data.file.read(1024):
@@ -88,7 +100,6 @@ async def post_upload_pool_img(
 	else:
 		return bad_image_file
 	
-
 	image_in_db = crud.get_image_by_path(db,image_path)
 	if image_in_db is not None:
 		crud.update_image_data(
@@ -99,12 +110,19 @@ async def post_upload_pool_img(
 		crud.add_image_to_db(
 			db,
 			schemas.PoolImage(
-				name=data.name,
+				name=data.file.filename,
 				tag=data.tag,
 				active=data.active,
-				file_path=image_path
+				file_path=image_path,
+				use_type=data.use_type
 			)
 		)
+	
+	utils.create_thumbnail(image_path)
+
+	if data.use_type == "freespace":
+		maker_manager.card.freespaceImagePath = image_path
+		maker_manager.save_settings_to_db(db)
 
 	return {"Result": "OK"}
 

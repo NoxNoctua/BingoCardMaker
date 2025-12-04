@@ -37,10 +37,10 @@ Find Int Setting in database and sets it value
 def set_int_setting(db: Session, name: str, value: int) -> bool:
 	log.debug(f"Setting {name} to {value}")
 	try:
-		setting = db.scalar(
+		setting = db.scalars(
 			select(models.IntSetting)
 			.where(models.IntSetting.name==name)
-		).one()
+		).one_or_none()
 		if setting is not None:
 			setting = value
 			db.commit()
@@ -56,10 +56,10 @@ Fing Int setting in database
 def get_int_setting(db: Session, name: str) -> Optional[models.IntSetting]:
 	log.debug(f"Getting setting {name}")
 	try:
-		setting = db.scalar(
+		setting = db.scalars(
 			select(models.IntSetting)
 			.where(models.IntSetting.name==name)
-		).one()
+		).one_or_none()
 		if setting is not None:
 			return setting
 		else:
@@ -128,10 +128,10 @@ Find Int Setting in database and sets it value
 def set_str_setting(db: Session, name: str, value: str) -> bool:
 	log.debug(f"Setting {name} to {value}")
 	try:
-		setting = db.scalar(
+		setting = db.scalars(
 			select(models.StrSetting)
 			.where(models.StrSetting.name==name)
-		).one()
+		).one_or_none()
 		if setting is not None:
 			setting = value
 			db.commit()
@@ -147,10 +147,10 @@ Fing Int setting in database
 def get_str_setting(db: Session, name: str) -> Optional[models.StrSetting]:
 	log.debug(f"Getting setting {name}")
 	try:
-		setting = db.scalar(
+		setting = db.scalars(
 			select(models.StrSetting)
 			.where(models.StrSetting.name==name)
-		).one()
+		).one_or_none()
 		if setting is not None:
 			return setting
 		else:
@@ -219,10 +219,10 @@ Find Int Setting in database and sets it value
 def set_bool_setting(db: Session, name: str, value: bool) -> bool:
 	log.debug(f"Setting {name} to {value}")
 	try:
-		setting = db.scalar(
+		setting = db.scalars(
 			select(models.BoolSetting)
 			.where(models.BoolSetting.name==name)
-		).one()
+		).one_or_none()
 		if setting is not None:
 			setting = value
 			db.commit()
@@ -238,10 +238,10 @@ Fing Int setting in database
 def get_bool_setting(db: Session, name: str) -> Optional[models.BoolSetting]:
 	log.debug(f"Getting setting {name}")
 	try:
-		setting = db.scalar(
+		setting = db.scalars(
 			select(models.BoolSetting)
 			.where(models.BoolSetting.name==name)
-		).one()
+		).one_or_none()
 		if setting is not None:
 			return setting
 		else:

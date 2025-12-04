@@ -12,29 +12,46 @@ class MakerManager:
 	def __init__(self):
 		log.debug("initlizing makermanager")
 		self.card: bingocard.BingoCard = bingocard.BingoCard()
-		self.cardNum: int = 0
+		self.card_num: int = 0
 		self.pool = []
+		self.active_tags = ["default"]
 
 	def genCard(self, fileType: str ="PNG") -> (str, int):
-		log.info(f"Generating card: {self.cardNum}")
-		path = self.card.genCard(pool=self.pool, id=self.cardNum, fileType=fileType)
+		log.info(f"Generating card: {self.card_num}")
+		path = self.card.genCard(pool=self.pool, id=self.card_num, fileType=fileType)
 		
-		self.cardNum += 1
+		self.card_num += 1
 
-		return (path, self.cardNum-1)
+		return (path, self.card_num-1)
+	
+	def refresh_pool(self, db) -> bool:
+		try:
+			log.info("Refreshing pool")
+			self.pool = []
+			for tag in self.active_tags:
+				db_pool = poolcrud.get_images_by_tag(db, tag)
+				for t in db_pool:
+					if t.use_type == "pool":
+						t.path = t.file_path
+						self.pool.append(t)
+			# TODO remove duplicate entries when there are multiple selected tags
+			log.info("pool refreshed")
+		except Exception as e:
+			log.exception("Failed to refresh_pool")
 
 	def set_pool_by_tag(self, db, tag:str):
-		self.pool = poolcrud.get_images_by_tag(db, tag)
-		for t in self.pool:
-			t.path = t.file_path
-		log.info(f"pool is: {self.pool}")
+		self.active_tags = []
+		self.active_tags.append(tag)
+		self.refresh_pool(db)
+
+	#TODO add additional tags
 
 	"""
 	using this class as a dictionary save all of its atributes to the db
 	"""
 	def save_settings_to_db(self, db):
 		log.info("Saving site settings to database")
-		settings = vars(self)
+		settings = vars(self.card)
 		for name, value in settings.items():
 			if type(value) == int:
 				crud.set_int_setting(db, name, value)
