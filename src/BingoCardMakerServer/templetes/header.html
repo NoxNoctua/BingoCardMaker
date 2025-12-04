@@ -1,3 +1,5 @@
+
+
 <div id="nav_bar">
 	<nav>
 		<ul id="nav_list">
@@ -8,9 +10,6 @@
 				<a href="{{ domain_url }}/uploadimage">Upload Image</a>
 			</li>
 			<li class="nav_list_item">
-				<a href="{{ domain_url }}/login">Login</a>
-			</li>
-			<li class="nav_list_item">
 				<a href="{{ domain_url }}/editcardconfig">Edit Cards</a>
 			</li>
 			<li class="nav_list_item">
@@ -19,6 +18,48 @@
 			<li class="nav_list_item">
 				<a href="{{ domain_url }}/docs">API</a>
 			</li>
+			<div class="spacer_div"></div>
+			<li class="nav_list_item" id="loginandlogout" style="display: flex; flex-direction: row;">
+			</li>
 		</ul>
 	</nav>
 </div>
+
+<script>
+	const loginli = document.querySelector("#loginandlogout");
+
+	const user = fetch(
+		"{{ domain_url }}/users/me",
+		{ method: "GET" }
+	).then(response => response.json())
+		.then(data => {
+			if (data.detail == "Could not validate credentials") {
+				const loginbtn = document.createElement("a");
+				loginbtn.innerText="Login";
+				loginbtn.href = "{{ domain_url }}/login";
+				loginli.appendChild(loginbtn);
+			}
+			else {
+				const userLabel = document.createElement("label");
+				userLabel.innerText = data.username;
+				userLabel.classList.add("medium_label");
+				userLabel.classList.add("vcenter_label")
+				loginli.appendChild(userLabel)
+
+				const logout = document.createElement("button");
+				logout.innerText = "Logout";
+				logout.classList.add("tiny_button");
+				logout.addEventListener("click", () => {
+					fetch(
+						"{{ domain_url }}/users/logout",
+						{ method: "POST"}
+					).then( () => {
+						window.location.href = "{{ domain_url }}";
+					});
+				});
+
+				loginli.appendChild(logout);
+			}
+
+		});
+</script>

@@ -64,6 +64,12 @@
 						const imgDelete = document.createElement("button");
 						imgDelete.classList = "small_button";
 						imgDelete.innerText = "Delete"
+						imgDelete.addEventListener("click", () => {
+							fetch(
+								"{{ domain_url }}/poolmanagment/delete/" + img.file_path,
+								{ method: "POST" }
+							)
+						});
 
 						line1Div.appendChild(imgToggleActive);
 						line1Div.appendChild(imgName);
@@ -88,12 +94,47 @@
 
 						poolimgsDiv.appendChild(imgDiv);
 					}
-				});
+				}
+			);
+
+			const dropdown_tags = document.querySelector("#active_tag")
+			
+			const tags = fetch(
+				"{{ domain_url }}/poolmanagment/poolimgtags",
+				{ method: "GET" }
+			).then(response => response.json())
+			.then(
+				data =>{
+					for( const tag of data) {
+						const new_option = document.createElement("option");
+						new_option.value = tag;
+						new_option.innerText = tag;
+						dropdown_tags.appendChild(new_option);
+					}
+				}
+			);
+
+			const update_pool_btn = document.querySelector("#update_pool")
+			update_pool_btn.addEventListener("click", (e) => {
+				fetch(
+					"{{ domain_url }}/poolmanagment/updateactivepool/" + dropdown_tags.value,
+					{ method: "POST" }
+				)
+			});
 
 		}//window load
 	</script>
 	{% include 'header.html' %}
 	<div id="main_div" class="main_div_style">
+		<div class="sub_div">
+			<div class="input_div">
+				<label class="vcenter_label medium_label">Select Active Tag</label>
+				<div class="spacer_div"></div>
+				<select name="active_tag" id="active_tag">
+				</select>
+			</div>
+			<button id="update_pool" class="small_button">Update Active Pool</button>
+		</div>
 		<div id="pool_imgs">
 
 		</div>

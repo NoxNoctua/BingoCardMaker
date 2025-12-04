@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from . import schemas, crud, utils
 from ..database import SessionLocal
 from ..exceptions import image_path_not_in_db, bad_image_file
-from .. import constants
+from .. import constants, exceptions, dependencies
 from ..cardgen.makermanager import maker_manager
 
 
@@ -30,6 +30,7 @@ def get_db():
 router = APIRouter(
 	prefix="/poolmanagment",
 	tags=["pool_managment"],
+	dependencies=[Depends(dependencies.get_active_admin_user)],
 )
 
 @router.post("/updatedbfrompool")
@@ -107,15 +108,31 @@ async def post_upload_pool_img(
 
 	return {"Result": "OK"}
 
+@router.post("/delete/{image_path:path}")
+async def post_delete_image(image_path: str, db = Depends(get_db)):
+	path = os.path.join(
+		constants.POOL_PATH,
+		os.path.basename(image_path)
+	)
+	image_in_db = crud.get_image_by_path(db,path)
+	if image_in_db is not None:
+		return crud.delete_image_in_db(db, path)
+	else:
+		raise image_path_not_in_db
+
 @router.post("/rebuildthumbnails")
 def post_rebuildthumbnails():
 	utils.recreate_thumbnails()
+
+@router.post("/cleardbofmissingimages")
+def post_clear_db_of_missing_images(db = Depends(get_db)):
+	if not crud.remove_missing_images(db):
+		return exceptions.internal_error
 
 @router.post("/toggletile/{name}/{value}")
 def post_toggle_tile(name: str, value: bool, db=Depends(get_db)):
 	crud.set_tile_toggle(db,name,value)
 
-@router.post("/updateactivepool")
-def post_update_active_pool(db=Depends(get_db)):
-	maker_manager.set_pool_by_tag(db, "default")
- 
+@router.post("/updateactivepool/{tag}")
+def post_update_active_pool(tag: str, db=Depends(get_db)):
+	maker_manager.set_pool_by_tag(db, tag)

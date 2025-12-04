@@ -1,11 +1,11 @@
 """
 Router for the pages modual that generates and returns the various html files and pages
 """
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from .. import constants
+from .. import constants, dependencies
 from ..admintools.sitesettings import site_settings
 
 router = APIRouter(
@@ -39,7 +39,7 @@ async def generate_login_response(request: Request):
 		context=root_template_context
 	)
 
-@router.get("/editcardconfig", response_class=HTMLResponse)
+@router.get("/editcardconfig", response_class=HTMLResponse, dependencies=[Depends(dependencies.get_active_admin_user)])
 async def get_editcardconfig(request: Request):
 	return templates.TemplateResponse(
 		request=request,
@@ -47,7 +47,7 @@ async def get_editcardconfig(request: Request):
 		context=root_template_context
 	)
 
-@router.get("/uploadimage", response_class=HTMLResponse)
+@router.get("/uploadimage", response_class=HTMLResponse, dependencies=[Depends(dependencies.get_active_admin_user)])
 async def get_uploadimage(request: Request):
 	return templates.TemplateResponse(
 		request=request,
@@ -55,7 +55,7 @@ async def get_uploadimage(request: Request):
 		context=root_template_context
 	)
 
-@router.get("/managepool", response_class=HTMLResponse)
+@router.get("/managepool", response_class=HTMLResponse, dependencies=[Depends(dependencies.get_active_admin_user)])
 async def get_uploadimage(request: Request):
 	return templates.TemplateResponse(
 		request=request,

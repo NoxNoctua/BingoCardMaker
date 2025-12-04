@@ -9,7 +9,7 @@ from fastapi import APIRouter, Response, Depends
 
 from . import crud, schemas
 from ..users import schemas as user_schemas
-from .. import dependencies
+from .. import dependencies, exceptions, constants
 from ..database import SessionLocal
 
 log = logging.getLogger(__name__)
@@ -49,8 +49,10 @@ async def post_clearLog(
 async def post_clearOutput(
 	current_user: Annotated[user_schemas.User, Depends(dependencies.get_active_admin_user)]
 ):
-	clearOutput()
-	return Response(content="Cleared output.", media_type="text")
+	if clearOutput():
+		return Response(content="Cleared output.", media_type="text")
+	else:
+		 return exceptions.internal_error
 
 @router.get("/intsettings", response_model=list[schemas.IntSetting])
 async def get_intsettings(
@@ -85,12 +87,16 @@ def clearLog():
 		log.error(str(e))
 	log.info("Cleared log")
 
-def clearOutput():
+"""
+deletes all files in the output directory
+"""
+def clearOutput() -> bool:
 	try:
-		with os.scandir(OUTPUT_PATH) as outDir:
+		with os.scandir(constants.OUTPUT_PATH) as outDir:
 			for e in outDir:
 				log.debug(e.name)
 				os.remove(e.path)
+		return True
 	except Exception as e:
-		log.error("Failed to clear output dir")
-		log.error(str(e))
+		log.exception("Failed to clear output dir")
+		return False

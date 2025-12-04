@@ -8,12 +8,8 @@
 	<title>{{ page_title }}</title>
 	<link rel="stylesheet" href="{{ url_for('static', path='root_style.css') }}">
 	<style>
-				
-		#file_input {
-			grid-row: 1;
-			grid-column: 1;
-			margin: auto;
-		}
+		
+		
 	
 	</style>
 </head>
@@ -22,27 +18,29 @@
 	{% include 'header.html' %}
 	<div id="main" class="main_div_style">
 		<form id="upload_image_form" class="default_form_style" method="post" action="{{ domain_url }}/poolmanagment/uploadimg" enctype="multipart/form-data">
-			<h1>Upload an Image</h1>
-			<div class="input_div">
-				<input type="file" id="file_input" name="file" required>
+			<h1 class="large_title">Upload an Image</h1>
+			<div class="input_div fixed_width_medium">
+				<input type="file" class="medium_label" id="file_input" name="file" required>
 			</div>
-			<div class="input_div">
-				<label class="text_input_label">Name</label>
+			<div class="input_div fixed_width_medium">
+				<label class="medium_label">Name</label>
+				<div class="spacer_div"></div>
 				<input type="text" name="name" required placeholder="new image">
 			</div>
-			<div class="input_div">
-				<label class="text_input_label">Tag</label>
+			<div class="input_div fixed_width_medium">
+				<label class="medium_label">Tag</label>
+				<div class="spacer_div"></div>
 				<input type="text" name="tag" required placeholder="default">
 			</div>
-			<div class="input_div">
-				<input type="checkbox" name="for_pool" checked="true">
-				<label>Add to pool</label>
+			<div class="input_div fixed_width_medium">
+				<input type="checkbox" name="for_pool" class="medium_checkbox" checked="true">
+				<label class="medium_label vcenter_label">Add to pool</label>
 			</div>
-			<div class="input_div">
-				<input type="checkbox" name="active" checked="true">
-				<label>Active</label>
+			<div class="input_div fixed_width_medium">
+				<input type="checkbox" name="active" class="medium_checkbox" checked="true">
+				<label class="medium_label vcenter_label">Active</label>
 			</div>
-			<button type="submit">Upload</button>
+			<button type="submit" class="small_button">Upload</button>
 		</form>
 	</div>
 </body>

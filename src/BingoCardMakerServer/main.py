@@ -88,6 +88,13 @@ app.add_middleware(
 	secret_key="mysecret"
 )
 
+# TODO pregen cards
+#	If pool is updated or settings changed pregen need to be redone
+#	Card numbers may need to be reset
+# TODO keep track of guest user and give them the same card
+# TODO Clear out card output based on time and amount in dir
+
+
 app.include_router(user_router)
 app.include_router(page_router)
 app.include_router(admintools_router)

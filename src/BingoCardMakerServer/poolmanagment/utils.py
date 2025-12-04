@@ -44,10 +44,12 @@ def upload_pool_to_db(db: Session):
 				schemas.PoolImage(
 					name=img_path.name,
 					file_path=img_path.path,
+					thumbnail_path=os.path.join(constants.THUMBNAIL_PATH, img_path.name),
 					tag="default",
 					active=True
 				)
 			)
+			create_thumbnail(img_path.path)
 	return True
 
 """

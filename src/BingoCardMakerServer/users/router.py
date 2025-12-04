@@ -80,3 +80,10 @@ async def read_user_isadmin(
 	current_user: Annotated[schemas.User, Depends(dependencies.get_active_admin_user)],
 ):
 	return schemas.User.model_validate(current_user)
+
+@router.post("/logout")
+async def post_logout(
+	request: Request,
+):
+	request.session.clear()
+	return {"success": True}

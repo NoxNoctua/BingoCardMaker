@@ -30,6 +30,24 @@ def add_image_to_db(db:Session,image: schemas.PoolImage) -> bool:
 		return False
 
 """
+delete image in the pool
+"""
+def delete_image_in_db(db:Session, image_path: str) -> bool:
+	log.debug(f"deleting image {image_path}")
+	try:
+		img = get_image_by_path(db, image_path)
+		if img is not None:
+			db.delete(img)
+			db.commit()
+			return True
+		else:
+			log.debug("image is not in database")
+			return False
+	except Exception as e:
+		log.exception("Failed to delete image from database")
+		return False
+
+"""
 Get image data from file path
 """
 def get_image_by_path(db:Session, path:str) -> Optional[models.PoolImage]:
@@ -43,6 +61,7 @@ def get_image_by_path(db:Session, path:str) -> Optional[models.PoolImage]:
 		if img is not None:
 			return img
 		else:
+			log.debug(f"could not find image {path}")
 			return None
 	except Exception as e:
 		log.exception("Could not search image in db")
@@ -144,3 +163,19 @@ def set_tile_toggle(db: Session, img_name: str, value: bool):
 		db.commit()
 	except Exception as e:
 		log.exception(e)
+
+"""
+removes images from the database that do not have a matching file
+"""
+def remove_missing_images(db: Session):
+	log.debug("Removing missing images")
+	try:
+		imgs = get_all_images(db)
+		for img in imgs:
+			if not os.path.exists(img.file_path):
+				db.delete(img)
+		db.commit()
+		return True
+	except Exception as e:
+		log.exception("Could not clean db of missing images")
+		return False
