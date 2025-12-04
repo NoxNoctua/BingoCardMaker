@@ -33,7 +33,7 @@
 		{ method: "GET" }
 	).then(response => response.json())
 		.then(data => {
-			if (data.detail == "Could not validate credentials") {
+			if (data.username == undefined) {
 				const loginbtn = document.createElement("a");
 				loginbtn.innerText="Login";
 				loginbtn.href = "{{ domain_url }}/login";

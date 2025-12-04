@@ -64,7 +64,7 @@ lib_log_root.setLevel(logging.DEBUG)
 
 app = FastAPI()
 
-app.mount("/s", StaticFiles(directory="src/BingoCardMakerServer/MountedStatic"), name="static")
+app.mount("/s", StaticFiles(directory="src/bingocardmakerserver/MountedStatic"), name="static")
 
 origins = [
 	"http://localhost",

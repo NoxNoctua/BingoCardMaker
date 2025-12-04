@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from .admintools.sitesettings import site_settings
 
 credentials_exception = HTTPException(
-	status_code=status.HTTP_302_FOUND,
+	status_code=status.HTTP_401_UNAUTHORIZED,
 	detail="Could not validate credentials",
 	headers={"Location": site_settings.site_url+"/login"}
 )
