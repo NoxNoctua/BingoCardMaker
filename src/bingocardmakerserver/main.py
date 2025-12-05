@@ -14,6 +14,9 @@ from .admintools.router import router as admintools_router
 from .cardgen.router import router as cardgen_router
 from .poolmanagment.router import router as poolmanagment_router
 
+from .database import SessionLocal
+from .cardgen.makermanager import maker_manager
+
 # MARK: Setting up logging
 
 class CustomFormatter(logging.Formatter):
@@ -100,3 +103,7 @@ app.include_router(page_router)
 app.include_router(admintools_router)
 app.include_router(cardgen_router)
 app.include_router(poolmanagment_router)
+
+db = SessionLocal()
+
+maker_manager.load_settings_from_db(db)

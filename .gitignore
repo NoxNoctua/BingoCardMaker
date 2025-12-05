@@ -7,5 +7,7 @@ thumbnails/
 /dist
 **/*.pyc
 **/*.sqlite
-resources/bingo_database.sqlite
+/resources/*.sqlite
+/resources/bingo_database*
+**/__pycache__
 resources/bingo_database.sqlite

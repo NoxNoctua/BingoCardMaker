@@ -5,8 +5,8 @@ import logging
 import os, io
 from typing import Annotated
 
-from fastapi import APIRouter, Response, Depends, Form, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Response, Depends, Form, UploadFile, File, status
+from fastapi.responses import FileResponse, RedirectResponse
 
 
 from . import schemas, crud, utils
@@ -88,7 +88,9 @@ async def post_upload_pool_img(
 	db=Depends(get_db)
 ):
 	log.info(f"Got file with name {data.file.filename}")
-	log.debug(f"name: {data.name} | tag: {data.tag} | active: {data.active} | type: {data.file.content_type}")
+	log.debug(f"name: {data.name} | tag: {data.tag} | active: {data.active} | type: {data.file.content_type} | use: {data.use_type}")
+
+	data.name = data.file.filename
 
 	image_path = os.path.join(constants.POOL_PATH, data.file.filename)
 
@@ -100,7 +102,7 @@ async def post_upload_pool_img(
 	else:
 		return bad_image_file
 	
-	image_in_db = crud.get_image_by_path(db,image_path)
+	image_in_db = crud.get_image_by_name(db,data.name)
 	if image_in_db is not None:
 		crud.update_image_data(
 			db,
@@ -110,11 +112,12 @@ async def post_upload_pool_img(
 		crud.add_image_to_db(
 			db,
 			schemas.PoolImage(
-				name=data.file.filename,
+				name=data.name,
 				tag=data.tag,
 				active=data.active,
 				file_path=image_path,
-				use_type=data.use_type
+				use_type=data.use_type,
+				thumbnail_path=os.path.join(constants.THUMBNAIL_PATH, data.name)
 			)
 		)
 	
@@ -123,8 +126,11 @@ async def post_upload_pool_img(
 	if data.use_type == "freespace":
 		maker_manager.card.freespaceImagePath = image_path
 		maker_manager.save_settings_to_db(db)
+	if data.use_type == "base":
+		maker_manager.card.baseImagePath = image_path
+		maker_manager.save_settings_to_db(db)
 
-	return {"Result": "OK"}
+	return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.post("/delete/{image_path:path}")
 async def post_delete_image(image_path: str, db = Depends(get_db)):
@@ -154,3 +160,7 @@ def post_toggle_tile(name: str, value: bool, db=Depends(get_db)):
 @router.post("/updateactivepool/{tag}")
 def post_update_active_pool(tag: str, db=Depends(get_db)):
 	maker_manager.set_pool_by_tag(db, tag)
+
+@router.post("/updateusetype/{name}/{value}")
+def post_update_use_type(name: str, value: str, db=Depends(get_db)):
+	crud.update_use_type(db, name, value)

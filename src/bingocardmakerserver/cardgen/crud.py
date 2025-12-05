@@ -133,10 +133,11 @@ def set_str_setting(db: Session, name: str, value: str) -> bool:
 			.where(models.StrSetting.name==name)
 		).one_or_none()
 		if setting is not None:
-			setting = value
+			setting.value = value
 			db.commit()
 			return True
 		else:
+			log.warn(f"Could not find setting {name}")
 			return False
 	except Exception as e:
 		log.exception("Could not set setting")

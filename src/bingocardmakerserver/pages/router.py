@@ -39,7 +39,7 @@ async def generate_login_response(request: Request):
 		context=root_template_context
 	)
 
-@router.get("/editcardconfig", response_class=HTMLResponse, dependencies=[Depends(dependencies.get_active_admin_user)])
+@router.get("/editcardconfig", response_class=HTMLResponse)
 async def get_editcardconfig(request: Request):
 	return templates.TemplateResponse(
 		request=request,
@@ -47,7 +47,7 @@ async def get_editcardconfig(request: Request):
 		context=root_template_context
 	)
 
-@router.get("/uploadimage", response_class=HTMLResponse, dependencies=[Depends(dependencies.get_active_admin_user)])
+@router.get("/uploadimage", response_class=HTMLResponse)
 async def get_uploadimage(request: Request):
 	return templates.TemplateResponse(
 		request=request,
@@ -55,7 +55,7 @@ async def get_uploadimage(request: Request):
 		context=root_template_context
 	)
 
-@router.get("/managepool", response_class=HTMLResponse, dependencies=[Depends(dependencies.get_active_admin_user)])
+@router.get("/managepool", response_class=HTMLResponse)
 async def get_uploadimage(request: Request):
 	return templates.TemplateResponse(
 		request=request,

@@ -25,3 +25,4 @@ class UpdateImageForm(BaseModel):
 	name: str
 	tag: str
 	active:bool
+	use_type: str

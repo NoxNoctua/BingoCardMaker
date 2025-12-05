@@ -158,6 +158,7 @@ def update_image_data(db: Session, img: schemas.UpdateImageForm) -> bool:
 		img_in_db.name=img.name
 		img_in_db.tag=img.tag
 		img_in_db.active=img.active
+		img_in_db.use_type=img.use_type
 
 		db.commit()
 		return True
@@ -184,6 +185,22 @@ def set_tile_toggle(db: Session, img_name: str, value: bool):
 		db.commit()
 	except Exception as e:
 		log.exception(e)
+
+"""
+Updates the use type of pool image
+"""
+def update_use_type(db: Session, img_name: str, value: str) -> bool:
+	log.debug(f"updating use type for {img_name} to {value}")
+	try:
+		img = get_image_by_name(db, img_name)
+		if img is not None:
+			img.use_type = value
+			db.commit()
+		else:
+			return False
+	except Exception as e:
+		log.exception("Could not update use type")
+		return True
 
 """
 removes images from the database that do not have a matching file
